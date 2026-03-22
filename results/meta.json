@@ -1,7 +1,7 @@
 {
-  "last_run": "2026-03-22T19:43:03.144190Z",
+  "last_run": "2026-03-22T19:49:10.611584Z",
   "triggered_by": "DMA-1970",
-  "scenario": "CUSTOM",
-  "run_number": 17,
-  "run_url": "https://github.com/DMA-1970/AMCAF/actions/runs/23410982157"
+  "scenario": "SC-07",
+  "run_number": 18,
+  "run_url": "https://github.com/DMA-1970/AMCAF/actions/runs/23411092794"
 }
