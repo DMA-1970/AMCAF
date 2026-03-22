@@ -1077,6 +1077,61 @@ if _custom:
 
 
 # ─────────────────────────────────────────────
+# FRAMEWORK FILTER
+# ─────────────────────────────────────────────
+
+FRAMEWORK_ALIASES = {
+    "DORA":     "DORA",
+    "FCA":      "FCA PS21/3",
+    "UKGDPR":   "UK GDPR",
+    "ISO27001": "ISO 27001",
+    "NISTCSF":  "NIST CSF",
+    "CSSF":     "CSSF 22/806",
+    "NDPR":     "NDPR",
+    "MASTRM":   "MAS TRM",
+    "PCIDSS":   "PCI DSS",
+    "SOC2":     "SOC 2",
+}
+
+def filter_by_framework(report: dict, framework: str) -> dict:
+    """
+    Returns a filtered report containing only findings whose control
+    has at least one regulatory_ref matching the requested framework.
+    Recalculates totals and compliance rate after filtering.
+    """
+    if not framework or framework.upper() == "ALL":
+        return report
+
+    fw_key   = framework.upper().replace(" ", "").replace("/", "").replace("-", "")
+    fw_match = FRAMEWORK_ALIASES.get(fw_key, framework)
+
+    filtered = [
+        f for f in report["findings"]
+        if any(fw_match.lower() in ref.lower() for ref in f.get("regulatory_refs", []))
+    ]
+
+    if not filtered:
+        print(f"  WARNING: No controls found matching framework '{framework}'")
+        print(f"  Valid options: {', '.join(FRAMEWORK_ALIASES.keys())}")
+
+    total  = len(filtered)
+    passed = sum(1 for f in filtered if f["status"] == "PASS")
+    failed = total - passed
+
+    return {
+        "report_metadata": {
+            **report["report_metadata"],
+            "framework_filter": framework,
+            "total_checks":     total,
+            "passed":           passed,
+            "failed":           failed,
+            "compliance_rate":  f"{round((passed/total)*100,1)}%" if total else "0%",
+        },
+        "findings": filtered,
+    }
+
+
+# ─────────────────────────────────────────────
 # ENTRY POINT
 # ─────────────────────────────────────────────
 
@@ -1091,6 +1146,14 @@ if __name__ == "__main__":
     parser.add_argument(
         "--format", default="console", choices=["console", "json"],
         help="Output format: console (default) or json",
+    )
+    parser.add_argument(
+        "--framework", default="ALL",
+        help=(
+            "Filter results by regulatory framework. "
+            "Options: ALL, DORA, FCA, UKGDPR, ISO27001, NISTCSF, "
+            "CSSF, NDPR, MASTRM, PCIDSS, SOC2 (default: ALL)"
+        ),
     )
     args = parser.parse_args()
     sc   = args.scenario.upper()
@@ -1109,22 +1172,34 @@ if __name__ == "__main__":
         print(f"ERROR: Unknown scenario '{sc}'. Valid: ALL, CUSTOM, {', '.join(SCENARIOS.keys())}")
         sys.exit(1)
 
+    if args.framework.upper() != "ALL":
+        fw_key = args.framework.upper().replace(" ","").replace("/","").replace("-","")
+        fw_match = FRAMEWORK_ALIASES.get(fw_key, args.framework)
+        print(f"\n  Framework filter active: {fw_match}")
+        print(f"  Only controls referencing '{fw_match}' will be shown.\n")
+
     if args.format == "json":
         os.makedirs("results", exist_ok=True)
 
     for entry in to_run:
-        label, aws_cfg, azure_cfg, gcp_cfg = entry[0], entry[1], entry[2], entry[3]
+        label   = entry[0]
+        aws_cfg = entry[1]
+        azure_cfg = entry[2]
+        gcp_cfg = entry[3]
         org_cfg = entry[4] if len(entry) > 4 else {}
-        report  = run_scenario(label, aws_cfg, azure_cfg, gcp_cfg, org_cfg)
+
+        report = run_scenario(label, aws_cfg, azure_cfg, gcp_cfg, org_cfg)
+        report = filter_by_framework(report, args.framework)
 
         if args.format == "json":
             sc_id    = "sc-custom" if sc == "CUSTOM" else label.split(":")[0].strip().lower()
-            out_path = f"results/{sc_id}.json"
+            fw_suffix = f"-{fw_key.lower()}" if args.framework.upper() != "ALL" else ""
+            out_path = f"results/{sc_id}{fw_suffix}.json"
             with open(out_path, "w") as fh:
                 json.dump(report, fh, indent=2)
             print(f"  Results written to {out_path}\n")
 
-    if args.format == "json" and sc == "ALL":
+    if args.format == "json" and sc == "ALL" and args.framework.upper() == "ALL":
         summary = []
         for sid in [k.lower() for k in SCENARIOS.keys()]:
             p = f"results/{sid}.json"
