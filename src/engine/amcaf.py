@@ -713,8 +713,20 @@ if __name__ == "__main__":
         report = run_scenario(label, aws_cfg, azure_cfg, gcp_cfg)
 
         if args.format == "json":
-            sc_id    = label.split(":")[0].strip().lower()
+            sc_id    = label.split(":")[0].strip().lower()  # e.g. "sc-01"
             out_path = f"results/{sc_id}.json"
             with open(out_path, "w") as fh:
                 json.dump(report, fh, indent=2)
             print(f"  Results written to {out_path}\n")
+
+    # write a combined summary file for the dashboard
+    if args.format == "json" and args.scenario == "ALL":
+        summary = []
+        for sc_id in [k.lower() for k in SCENARIOS.keys()]:
+            path = f"results/{sc_id}.json"
+            if os.path.exists(path):
+                with open(path) as fh:
+                    summary.append(json.load(fh))
+        with open("results/summary.json", "w") as fh:
+            json.dump(summary, fh, indent=2)
+        print("  Combined summary written to results/summary.json")
