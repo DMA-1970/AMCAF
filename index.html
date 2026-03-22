@@ -214,7 +214,8 @@ async function init(){
     document.getElementById('err').innerHTML='<div class="err">⚠ No result files found. Trigger the workflow to generate them.</div>';
     return;
   }
-  if(errs.length) document.getElementById('err').innerHTML=`<div class="err">⚠ Could not load: ${errs.join(', ')} — run the simulation to generate them.</div>`;
+  const realErrs = errs.filter(e => e !== 'sc-custom');
+  if(realErrs.length) document.getElementById('err').innerHTML=`<div class="err">⚠ Could not load: ${realErrs.join(', ')} — run the simulation to generate them.</div>`;
   metaBar(valid);
   document.getElementById('grid').innerHTML=valid.map((d,i)=>card(d,IDS[i],i)).join('');
 }
