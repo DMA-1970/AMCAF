@@ -1,6 +1,6 @@
 {
   "scenario_id": "SC-CUSTOM",
-  "description": "Custom: IAM wildcard (AWS), MFA disabled (Azure), Dormant accounts (AWS), Weak TLS (Azure), Logging disabled (all), Open SSH (AWS), Public bucket (GCP)",
+  "description": "Custom: S3 encryption disabled (AWS), KMS rotation disabled (all), Low log retention (AWS, Azure), Open SSH (AWS), No network segmentation (all), Backup disabled (all), Centralised findings disabled (all)",
   "expected_outcome": "Depends on selected toggles",
   "key_controls_tested": [
     "IAM-01",
@@ -8,18 +8,24 @@
     "IAM-03",
     "ENC-01",
     "ENC-02",
+    "ENC-03",
     "LOG-01",
     "LOG-02",
+    "LOG-03",
     "NET-01",
-    "NET-03"
+    "NET-02",
+    "NET-03",
+    "RES-01",
+    "RES-02",
+    "RES-03"
   ],
   "aws": {
     "iam": {
       "policies": [
         {
-          "name": "AdminPolicy",
+          "name": "ReadOnlyPolicy",
           "actions": [
-            "*"
+            "s3:GetObject"
           ]
         }
       ],
@@ -33,16 +39,6 @@
           "username": "admin-user",
           "mfa_enabled": true,
           "last_used_days": 12
-        },
-        {
-          "username": "svc-legacy",
-          "mfa_enabled": true,
-          "last_used_days": 142
-        },
-        {
-          "username": "audit-reader",
-          "mfa_enabled": true,
-          "last_used_days": null
         }
       ]
     },
@@ -50,7 +46,7 @@
       "buckets": [
         {
           "name": "prod-data",
-          "default_encryption_enabled": true
+          "default_encryption_enabled": false
         }
       ]
     },
@@ -58,12 +54,12 @@
       "trails": [
         {
           "name": "mgmt-trail",
-          "is_logging": false
+          "is_logging": true
         }
       ],
       "log_file_validation_enabled": true,
-      "s3_object_lock_enabled": true,
-      "retention_days": 365
+      "s3_object_lock_enabled": false,
+      "retention_days": 180
     },
     "ec2": {
       "security_groups": [
@@ -83,22 +79,82 @@
           ]
         }
       ]
+    },
+    "kms": {
+      "keys": [
+        {
+          "key_id": "key-prod-01",
+          "rotation_enabled": false
+        }
+      ]
+    },
+    "monitoring": {
+      "cloudwatch_alarms_enabled": true,
+      "security_hub_enabled": true
+    },
+    "vpc": {
+      "vpcs": [
+        {
+          "vpc_id": "vpc-prod",
+          "name": "production"
+        }
+      ]
+    },
+    "backup": {
+      "backup_plan_enabled": false,
+      "retention_days": 0
+    },
+    "aws_config": {
+      "config_rules_enabled": true,
+      "drift_detection_enabled": true
+    },
+    "security_hub": {
+      "enabled": false
     }
   },
   "azure": {
     "conditional_access": {
-      "mfa_policy_enabled": false
+      "mfa_policy_enabled": true
     },
     "storage_accounts": [
       {
         "name": "prodstore01",
-        "minimum_tls_version": "TLS1_0"
+        "minimum_tls_version": "TLS1_2"
       }
     ],
     "diagnostic_settings": {
-      "activity_log_enabled": false,
-      "log_retention_days": 90,
+      "activity_log_enabled": true,
+      "log_retention_days": 60,
       "immutable_storage_enabled": true
+    },
+    "key_vault": {
+      "keys": [
+        {
+          "name": "prod-key-01",
+          "rotation_policy_enabled": false
+        }
+      ]
+    },
+    "defender_for_cloud": {
+      "alerts_enabled": true,
+      "sentinel_integration": true,
+      "enabled": false,
+      "secure_score_enabled": false
+    },
+    "network": {
+      "vnets": [
+        {
+          "name": "vnet-prod"
+        }
+      ]
+    },
+    "backup": {
+      "backup_vault_enabled": false,
+      "retention_days": 0
+    },
+    "azure_policy": {
+      "policy_assignments_enabled": true,
+      "defender_posture_enabled": true
     }
   },
   "gcp": {
@@ -106,13 +162,13 @@
       "buckets": [
         {
           "name": "gs-prod",
-          "public_access_prevention": "unspecified",
-          "uniform_bucket_level_access": false
+          "public_access_prevention": "enforced",
+          "uniform_bucket_level_access": true
         }
       ]
     },
     "audit_logs": {
-      "admin_activity_enabled": false
+      "admin_activity_enabled": true
     },
     "iam": {
       "service_accounts": [
@@ -124,6 +180,35 @@
     },
     "vpc": {
       "firewall_rules": []
+    },
+    "cloud_kms": {
+      "keys": [
+        {
+          "name": "prod-key-01",
+          "rotation_schedule_enabled": false
+        }
+      ]
+    },
+    "security_command_center": {
+      "findings_enabled": true,
+      "alerting_policies_enabled": true,
+      "premium_enabled": false,
+      "asset_inventory_enabled": false
+    },
+    "vpc_networks": {
+      "networks": [
+        {
+          "name": "vpc-prod"
+        }
+      ]
+    },
+    "backup": {
+      "automated_backups_enabled": false,
+      "retention_days": 0
+    },
+    "org_policy": {
+      "constraints_enabled": true,
+      "security_health_analytics_enabled": true
     }
   }
 }
