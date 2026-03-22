@@ -1,1 +1,60 @@
-
+{
+  "scenario_id": "SC-06",
+  "description": "Dormant IAM users on AWS (inactive >90 days or never used); dormant service account on GCP; insufficient log retention on AWS (180 days) and Azure (60 days); S3 Object Lock absent on AWS",
+  "expected_outcome": "IAM-03 FAIL (AWS, GCP); LOG-02 FAIL (AWS, Azure)",
+  "key_controls_tested": ["IAM-03", "LOG-02"],
+  "aws": {
+    "iam": {
+      "policies": [
+        {"name": "ReadOnlyPolicy", "actions": ["s3:GetObject"]}
+      ],
+      "users": [
+        {"username": "ops-user",     "mfa_enabled": true, "last_used_days": 12},
+        {"username": "svc-legacy",   "mfa_enabled": true, "last_used_days": 142},
+        {"username": "audit-reader", "mfa_enabled": true, "last_used_days": null}
+      ]
+    },
+    "s3": {
+      "buckets": [
+        {"name": "prod-data", "default_encryption_enabled": true}
+      ]
+    },
+    "cloudtrail": {
+      "trails": [{"name": "mgmt-trail", "is_logging": true}],
+      "log_file_validation_enabled": true,
+      "s3_object_lock_enabled": false,
+      "retention_days": 180
+    },
+    "ec2": {"security_groups": []}
+  },
+  "azure": {
+    "conditional_access": {"mfa_policy_enabled": true},
+    "storage_accounts": [
+      {"name": "prodstore01", "minimum_tls_version": "TLS1_2"}
+    ],
+    "diagnostic_settings": {
+      "activity_log_enabled": true,
+      "log_retention_days": 60,
+      "immutable_storage_enabled": true
+    }
+  },
+  "gcp": {
+    "cloud_storage": {
+      "buckets": [
+        {
+          "name": "gs-prod",
+          "public_access_prevention": "enforced",
+          "uniform_bucket_level_access": true
+        }
+      ]
+    },
+    "audit_logs": {"admin_activity_enabled": true},
+    "iam": {
+      "service_accounts": [
+        {"name": "svc-dataflow@proj.iam", "last_used_days": 30},
+        {"name": "svc-archive@proj.iam",  "last_used_days": 210}
+      ]
+    },
+    "vpc": {"firewall_rules": []}
+  }
+}
