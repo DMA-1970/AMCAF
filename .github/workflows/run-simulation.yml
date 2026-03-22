@@ -19,16 +19,18 @@ on:
       output_format:
         description: 'Output format'
         required: true
-        default: 'console'
+        default: 'json'
         type: choice
         options:
-          - console
           - json
+          - console
 
 jobs:
   simulate:
     name: AMCAF Compliance Validation
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout repository
@@ -44,16 +46,35 @@ jobs:
           echo "=================================================="
           echo "  AMCAF v1.0 — Compliance Simulation"
           echo "  Scenario : ${{ github.event.inputs.scenario }}"
-          echo "  Format   : ${{ github.event.inputs.output_format }}"
           echo "  Triggered by: ${{ github.actor }}"
           echo "=================================================="
-          python src/engine/amcaf.py --scenario ${{ github.event.inputs.scenario }} --format ${{ github.event.inputs.output_format }}
+          python src/engine/amcaf.py \
+            --scenario ${{ github.event.inputs.scenario }} \
+            --format json
 
-      - name: Upload results as artifact
-        if: github.event.inputs.output_format == 'json'
-        uses: actions/upload-artifact@v4
-        with:
-          name: amcaf-results-${{ github.event.inputs.scenario }}-${{ github.run_number }}
-          path: results/
-          retention-days: 30
+      - name: Write run metadata
+        run: |
+          python - <<'EOF'
+          import json, os
+          from datetime import datetime
 
+          meta = {
+            "last_run": datetime.utcnow().isoformat() + "Z",
+            "triggered_by": "${{ github.actor }}",
+            "scenario": "${{ github.event.inputs.scenario }}",
+            "run_number": ${{ github.run_number }},
+            "run_url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          }
+          os.makedirs("results", exist_ok=True)
+          with open("results/meta.json", "w") as f:
+            json.dump(meta, f, indent=2)
+          print("Metadata written to results/meta.json")
+          EOF
+
+      - name: Commit results to repository
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add results/
+          git diff --staged --quiet || git commit -m "chore: update results from workflow run #${{ github.run_number }} (${{ github.event.inputs.scenario }})"
+          git push
