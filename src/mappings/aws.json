@@ -1,0 +1,61 @@
+{
+  "provider": "AWS",
+  "mappings": [
+    {
+      "control_id": "IAM-01",
+      "service": "IAM",
+      "implementation": "IAM Policies with least-privilege; no wildcard * actions in production policies; IAM Access Analyzer findings reviewed",
+      "config_attribute": "iam.policies[].actions",
+      "rule": "no wildcard (*) in actions list"
+    },
+    {
+      "control_id": "IAM-02",
+      "service": "IAM",
+      "implementation": "IAM MFA enforcement via SCP or account policy; AWS Organizations SCPs blocking console access without MFA",
+      "config_attribute": "iam.users[].mfa_enabled",
+      "rule": "mfa_enabled must be true for all users"
+    },
+    {
+      "control_id": "IAM-03",
+      "service": "IAM",
+      "implementation": "AWS IAM credential report; Access Advisor last-used data; automated deactivation via Lambda or AWS Config rule",
+      "config_attribute": "iam.users[].last_used_days",
+      "rule": "last_used_days must be <= 90; null (never used) is a FAIL"
+    },
+    {
+      "control_id": "ENC-01",
+      "service": "S3",
+      "implementation": "S3 default encryption (SSE-S3 or SSE-KMS); RDS storage encryption; EBS encryption enforced via SCP",
+      "config_attribute": "s3.buckets[].default_encryption_enabled",
+      "rule": "default_encryption_enabled must be true for all buckets"
+    },
+    {
+      "control_id": "LOG-01",
+      "service": "CloudTrail",
+      "implementation": "AWS CloudTrail enabled in all regions; management events logged; log file validation enabled",
+      "config_attribute": "cloudtrail.trails[].is_logging",
+      "rule": "is_logging must be true for all trails"
+    },
+    {
+      "control_id": "LOG-02",
+      "service": "CloudTrail / S3",
+      "implementation": "CloudTrail log file integrity validation; S3 Object Lock on log bucket; retention set to minimum 365 days",
+      "config_attribute": "cloudtrail.log_file_validation_enabled | cloudtrail.s3_object_lock_enabled | cloudtrail.retention_days",
+      "rule": "log_file_validation_enabled=true AND s3_object_lock_enabled=true AND retention_days >= 365"
+    },
+    {
+      "control_id": "NET-01",
+      "service": "EC2 / VPC",
+      "implementation": "Security Groups with default-deny inbound; NACLs; VPC Flow Logs enabled; no 0.0.0.0/0 inbound on production groups",
+      "config_attribute": "ec2.security_groups[].inbound_rules[].cidr",
+      "rule": "no inbound rule with cidr 0.0.0.0/0"
+    },
+    {
+      "control_id": "NET-03",
+      "service": "EC2 / VPC",
+      "implementation": "Security Groups blocking 0.0.0.0/0 on port 22/3389; Systems Manager Session Manager as alternative to direct SSH",
+      "config_attribute": "ec2.security_groups[].inbound_rules[port=22|3389]",
+      "rule": "no inbound rule with cidr 0.0.0.0/0 and port in {22, 3389}"
+    }
+  ]
+}

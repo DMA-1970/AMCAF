@@ -1,0 +1,33 @@
+{
+  "provider": "GCP",
+  "mappings": [
+    {
+      "control_id": "NET-01",
+      "service": "Cloud Storage",
+      "implementation": "GCS public access prevention enforced; uniform bucket-level access enabled. Note: public bucket exposure is classified as NET-01 (network access control) rather than ENC-01 because public_access_prevention is a network-layer boundary control in GCP's service model.",
+      "config_attribute": "cloud_storage.buckets[].public_access_prevention",
+      "rule": "public_access_prevention must equal 'enforced' OR uniform_bucket_level_access must be true"
+    },
+    {
+      "control_id": "LOG-01",
+      "service": "Cloud Audit Logs",
+      "implementation": "Cloud Audit Logs: Admin Activity logs enabled by default; Data Access logs configured as required",
+      "config_attribute": "audit_logs.admin_activity_enabled",
+      "rule": "admin_activity_enabled must be true"
+    },
+    {
+      "control_id": "IAM-03",
+      "service": "IAM / Cloud Identity",
+      "implementation": "IAM recommender unused role findings; Cloud Identity user lifecycle; automated review via Security Health Analytics",
+      "config_attribute": "iam.service_accounts[].last_used_days",
+      "rule": "last_used_days must be <= 90; null (never used) is a FAIL"
+    },
+    {
+      "control_id": "NET-03",
+      "service": "VPC / Cloud Firewall",
+      "implementation": "OS Login enforced; IAP (Identity-Aware Proxy) for SSH/RDP; firewall rules blocking public port 22/3389",
+      "config_attribute": "vpc.firewall_rules[].source_ranges + action",
+      "rule": "no allow rule with source_ranges=['0.0.0.0/0'] and ports=['all'] or ports=[]"
+    }
+  ]
+}

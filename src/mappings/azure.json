@@ -1,0 +1,33 @@
+{
+  "provider": "Azure",
+  "mappings": [
+    {
+      "control_id": "IAM-02",
+      "service": "Azure AD / Entra ID",
+      "implementation": "Azure AD Conditional Access policy requiring MFA for all admin roles; per-user MFA enforcement",
+      "config_attribute": "conditional_access.mfa_policy_enabled",
+      "rule": "mfa_policy_enabled must be true"
+    },
+    {
+      "control_id": "ENC-02",
+      "service": "Azure Storage",
+      "implementation": "Azure Storage minimum TLS version policy (TLS 1.2+); App Gateway / Front Door TLS configuration; Service endpoints",
+      "config_attribute": "storage_accounts[].minimum_tls_version",
+      "rule": "minimum_tls_version must not be TLS1_0 or TLS1_1"
+    },
+    {
+      "control_id": "LOG-01",
+      "service": "Azure Monitor",
+      "implementation": "Azure Activity Log enabled; Diagnostic Settings routing to Log Analytics Workspace; Microsoft Sentinel integration",
+      "config_attribute": "diagnostic_settings.activity_log_enabled",
+      "rule": "activity_log_enabled must be true"
+    },
+    {
+      "control_id": "LOG-02",
+      "service": "Azure Monitor / Log Analytics",
+      "implementation": "Log Analytics Workspace retention policy (minimum 90 days active + archive); immutable log storage; Azure Monitor Logs",
+      "config_attribute": "diagnostic_settings.log_retention_days | diagnostic_settings.immutable_storage_enabled",
+      "rule": "log_retention_days >= 90 AND immutable_storage_enabled=true"
+    }
+  ]
+}
