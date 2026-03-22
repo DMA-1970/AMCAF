@@ -20,6 +20,24 @@ on:
           - SC-08
           - CUSTOM
 
+      framework:
+        description: 'Filter by regulatory framework'
+        required: true
+        default: 'ALL'
+        type: choice
+        options:
+          - ALL
+          - DORA
+          - FCA
+          - UKGDPR
+          - ISO27001
+          - NISTCSF
+          - CSSF
+          - NDPR
+          - MASTRM
+          - PCIDSS
+          - SOC2
+
       # ── CUSTOM SCENARIO TOGGLES ──────────────────────────────────────
       # Only used when scenario = CUSTOM.
 
@@ -334,7 +352,8 @@ jobs:
           echo "=================================================="
           python src/engine/amcaf.py \
             --scenario ${{ github.event.inputs.scenario }} \
-            --format json
+            --format json \
+            --framework ${{ github.event.inputs.framework }}
 
       - name: Write run metadata and history
         run: |
