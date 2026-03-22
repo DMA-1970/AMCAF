@@ -16,77 +16,120 @@ on:
           - SC-04
           - SC-05
           - SC-06
+          - SC-07
+          - SC-08
           - CUSTOM
 
       # ── CUSTOM SCENARIO TOGGLES ──────────────────────────────────────
-      # Only used when scenario = CUSTOM. Each toggle introduces a
-      # specific misconfiguration into the synthetic configuration.
+      # Only used when scenario = CUSTOM.
 
       iam_wildcard:
-        description: '[CUSTOM] AWS — IAM wildcard policy (triggers IAM-01 FAIL)'
+        description: '[CUSTOM] AWS — IAM wildcard policy (IAM-01 FAIL)'
         required: false
         default: 'false'
         type: choice
         options: ['false','true']
 
       mfa_disabled_azure:
-        description: '[CUSTOM] Azure — MFA Conditional Access disabled (triggers IAM-02 FAIL)'
+        description: '[CUSTOM] Azure — MFA Conditional Access disabled (IAM-02 FAIL)'
         required: false
         default: 'false'
         type: choice
         options: ['false','true']
 
       dormant_accounts_aws:
-        description: '[CUSTOM] AWS — Include dormant IAM users (triggers IAM-03 FAIL)'
+        description: '[CUSTOM] AWS — Dormant IAM users present (IAM-03 FAIL)'
         required: false
         default: 'false'
         type: choice
         options: ['false','true']
 
       s3_encryption_disabled:
-        description: '[CUSTOM] AWS — S3 bucket encryption disabled (triggers ENC-01 FAIL)'
+        description: '[CUSTOM] AWS — S3 bucket encryption disabled (ENC-01 FAIL)'
         required: false
         default: 'false'
         type: choice
         options: ['false','true']
 
       weak_tls_azure:
-        description: '[CUSTOM] Azure — Storage account TLS set to 1.0 (triggers ENC-02 FAIL)'
+        description: '[CUSTOM] Azure — Storage account TLS 1.0 (ENC-02 FAIL)'
+        required: false
+        default: 'false'
+        type: choice
+        options: ['false','true']
+
+      kms_rotation_disabled:
+        description: '[CUSTOM] ALL — KMS key rotation disabled (ENC-03 FAIL)'
         required: false
         default: 'false'
         type: choice
         options: ['false','true']
 
       logging_disabled:
-        description: '[CUSTOM] ALL providers — Audit logging disabled (triggers LOG-01 FAIL)'
+        description: '[CUSTOM] ALL — Audit logging disabled (LOG-01 FAIL)'
         required: false
         default: 'false'
         type: choice
         options: ['false','true']
 
       log_retention_low:
-        description: '[CUSTOM] AWS + Azure — Log retention below minimum (triggers LOG-02 FAIL)'
+        description: '[CUSTOM] AWS + Azure — Log retention below minimum (LOG-02 FAIL)'
+        required: false
+        default: 'false'
+        type: choice
+        options: ['false','true']
+
+      alerting_disabled:
+        description: '[CUSTOM] ALL — Real-time alerting disabled (LOG-03 FAIL)'
         required: false
         default: 'false'
         type: choice
         options: ['false','true']
 
       open_ssh_aws:
-        description: '[CUSTOM] AWS — Security group open SSH 0.0.0.0/0 (triggers NET-01 + NET-03 FAIL)'
+        description: '[CUSTOM] AWS — Security group open SSH 0.0.0.0/0 (NET-01 + NET-03 FAIL)'
         required: false
         default: 'false'
         type: choice
         options: ['false','true']
 
       public_bucket_gcp:
-        description: '[CUSTOM] GCP — Cloud Storage bucket public access (triggers NET-01 FAIL)'
+        description: '[CUSTOM] GCP — Cloud Storage bucket public access (NET-01 FAIL)'
+        required: false
+        default: 'false'
+        type: choice
+        options: ['false','true']
+
+      no_segmentation:
+        description: '[CUSTOM] ALL — Single VPC/VNet only, no segmentation (NET-02 FAIL)'
         required: false
         default: 'false'
         type: choice
         options: ['false','true']
 
       permissive_firewall_gcp:
-        description: '[CUSTOM] GCP — VPC firewall allows all inbound (triggers NET-03 FAIL)'
+        description: '[CUSTOM] GCP — VPC firewall allows all inbound (NET-03 FAIL)'
+        required: false
+        default: 'false'
+        type: choice
+        options: ['false','true']
+
+      backup_disabled:
+        description: '[CUSTOM] ALL — Backup plans not configured (RES-01 FAIL)'
+        required: false
+        default: 'false'
+        type: choice
+        options: ['false','true']
+
+      drift_detection_disabled:
+        description: '[CUSTOM] ALL — Config drift detection disabled (RES-02 FAIL)'
+        required: false
+        default: 'false'
+        type: choice
+        options: ['false','true']
+
+      findings_disabled:
+        description: '[CUSTOM] ALL — Centralised findings not enabled (RES-03 FAIL)'
         required: false
         default: 'false'
         type: choice
@@ -116,29 +159,40 @@ jobs:
           python - <<'EOF'
           import json, os
 
-          iam_wildcard          = "${{ github.event.inputs.iam_wildcard }}"          == "true"
-          mfa_disabled_azure    = "${{ github.event.inputs.mfa_disabled_azure }}"    == "true"
-          dormant_accounts_aws  = "${{ github.event.inputs.dormant_accounts_aws }}"  == "true"
-          s3_enc_disabled       = "${{ github.event.inputs.s3_encryption_disabled }}" == "true"
-          weak_tls_azure        = "${{ github.event.inputs.weak_tls_azure }}"         == "true"
-          logging_disabled      = "${{ github.event.inputs.logging_disabled }}"       == "true"
-          log_retention_low     = "${{ github.event.inputs.log_retention_low }}"      == "true"
-          open_ssh_aws          = "${{ github.event.inputs.open_ssh_aws }}"           == "true"
-          public_bucket_gcp     = "${{ github.event.inputs.public_bucket_gcp }}"      == "true"
-          permissive_fw_gcp     = "${{ github.event.inputs.permissive_firewall_gcp }}" == "true"
+          iam_wildcard         = "${{ github.event.inputs.iam_wildcard }}"          == "true"
+          mfa_disabled_azure   = "${{ github.event.inputs.mfa_disabled_azure }}"    == "true"
+          dormant_aws          = "${{ github.event.inputs.dormant_accounts_aws }}"  == "true"
+          s3_enc_disabled      = "${{ github.event.inputs.s3_encryption_disabled }}" == "true"
+          weak_tls_azure       = "${{ github.event.inputs.weak_tls_azure }}"         == "true"
+          kms_rot_disabled     = "${{ github.event.inputs.kms_rotation_disabled }}"  == "true"
+          logging_disabled     = "${{ github.event.inputs.logging_disabled }}"       == "true"
+          log_ret_low          = "${{ github.event.inputs.log_retention_low }}"      == "true"
+          alerting_disabled    = "${{ github.event.inputs.alerting_disabled }}"      == "true"
+          open_ssh             = "${{ github.event.inputs.open_ssh_aws }}"           == "true"
+          public_bucket        = "${{ github.event.inputs.public_bucket_gcp }}"      == "true"
+          no_seg               = "${{ github.event.inputs.no_segmentation }}"        == "true"
+          perm_fw              = "${{ github.event.inputs.permissive_firewall_gcp }}" == "true"
+          backup_dis           = "${{ github.event.inputs.backup_disabled }}"        == "true"
+          drift_dis            = "${{ github.event.inputs.drift_detection_disabled }}" == "true"
+          findings_dis         = "${{ github.event.inputs.findings_disabled }}"      == "true"
 
-          # build description from active toggles
           active = []
-          if iam_wildcard:         active.append("IAM wildcard (AWS)")
-          if mfa_disabled_azure:   active.append("MFA disabled (Azure)")
-          if dormant_accounts_aws: active.append("Dormant accounts (AWS)")
-          if s3_enc_disabled:      active.append("S3 encryption disabled (AWS)")
-          if weak_tls_azure:       active.append("Weak TLS (Azure)")
-          if logging_disabled:     active.append("Logging disabled (all)")
-          if log_retention_low:    active.append("Low log retention (AWS, Azure)")
-          if open_ssh_aws:         active.append("Open SSH (AWS)")
-          if public_bucket_gcp:    active.append("Public bucket (GCP)")
-          if permissive_fw_gcp:    active.append("Permissive firewall (GCP)")
+          if iam_wildcard:      active.append("IAM wildcard (AWS)")
+          if mfa_disabled_azure:active.append("MFA disabled (Azure)")
+          if dormant_aws:       active.append("Dormant accounts (AWS)")
+          if s3_enc_disabled:   active.append("S3 encryption disabled (AWS)")
+          if weak_tls_azure:    active.append("Weak TLS (Azure)")
+          if kms_rot_disabled:  active.append("KMS rotation disabled (all)")
+          if logging_disabled:  active.append("Logging disabled (all)")
+          if log_ret_low:       active.append("Low log retention (AWS, Azure)")
+          if alerting_disabled: active.append("Alerting disabled (all)")
+          if open_ssh:          active.append("Open SSH (AWS)")
+          if public_bucket:     active.append("Public bucket (GCP)")
+          if no_seg:            active.append("No network segmentation (all)")
+          if perm_fw:           active.append("Permissive firewall (GCP)")
+          if backup_dis:        active.append("Backup disabled (all)")
+          if drift_dis:         active.append("Drift detection disabled (all)")
+          if findings_dis:      active.append("Centralised findings disabled (all)")
 
           desc = "Custom: " + (", ".join(active) if active else "all controls compliant")
 
@@ -146,12 +200,12 @@ jobs:
             {"username": "ops-user",   "mfa_enabled": True, "last_used_days": 5},
             {"username": "admin-user", "mfa_enabled": True, "last_used_days": 12},
           ]
-          if dormant_accounts_aws:
+          if dormant_aws:
             users.append({"username": "svc-legacy",   "mfa_enabled": True, "last_used_days": 142})
             users.append({"username": "audit-reader", "mfa_enabled": True, "last_used_days": None})
 
           sgs = []
-          if open_ssh_aws:
+          if open_ssh:
             sgs.append({
               "group_id": "sg-custom",
               "inbound_rules": [
@@ -164,21 +218,42 @@ jobs:
             "scenario_id": "SC-CUSTOM",
             "description": desc,
             "expected_outcome": "Depends on selected toggles",
-            "key_controls_tested": ["IAM-01","IAM-02","IAM-03","ENC-01","ENC-02","LOG-01","LOG-02","NET-01","NET-03"],
+            "key_controls_tested": ["IAM-01","IAM-02","IAM-03","ENC-01","ENC-02","ENC-03",
+                                     "LOG-01","LOG-02","LOG-03","NET-01","NET-02","NET-03",
+                                     "RES-01","RES-02","RES-03"],
             "aws": {
               "iam": {
                 "policies": [{"name": "AdminPolicy" if iam_wildcard else "ReadOnlyPolicy",
                               "actions": ["*"] if iam_wildcard else ["s3:GetObject"]}],
                 "users": users,
               },
-              "s3": {"buckets": [{"name": "prod-data", "default_encryption_enabled": not s3_enc_disabled}]},
+              "s3": {"buckets": [{"name": "prod-data",
+                                   "default_encryption_enabled": not s3_enc_disabled}]},
               "cloudtrail": {
                 "trails": [{"name": "mgmt-trail", "is_logging": not logging_disabled}],
                 "log_file_validation_enabled": True,
-                "s3_object_lock_enabled": not log_retention_low,
-                "retention_days": 180 if log_retention_low else 365,
+                "s3_object_lock_enabled": not log_ret_low,
+                "retention_days": 180 if log_ret_low else 365,
               },
               "ec2": {"security_groups": sgs},
+              "kms": {"keys": [{"key_id": "key-prod-01",
+                                 "rotation_enabled": not kms_rot_disabled}]},
+              "monitoring": {
+                "cloudwatch_alarms_enabled": not alerting_disabled,
+                "security_hub_enabled": not alerting_disabled,
+              },
+              "vpc": {"vpcs": [{"vpc_id": "vpc-prod", "name": "production"}] if no_seg
+                      else [{"vpc_id": "vpc-prod", "name": "production"},
+                             {"vpc_id": "vpc-staging", "name": "staging"}]},
+              "backup": {
+                "backup_plan_enabled": not backup_dis,
+                "retention_days": 0 if backup_dis else 35,
+              },
+              "aws_config": {
+                "config_rules_enabled": not drift_dis,
+                "drift_detection_enabled": not drift_dis,
+              },
+              "security_hub": {"enabled": not findings_dis},
             },
             "azure": {
               "conditional_access": {"mfa_policy_enabled": not mfa_disabled_azure},
@@ -186,24 +261,61 @@ jobs:
                                     "minimum_tls_version": "TLS1_0" if weak_tls_azure else "TLS1_2"}],
               "diagnostic_settings": {
                 "activity_log_enabled": not logging_disabled,
-                "log_retention_days": 60 if log_retention_low else 90,
+                "log_retention_days": 60 if log_ret_low else 90,
                 "immutable_storage_enabled": True,
+              },
+              "key_vault": {"keys": [{"name": "prod-key-01",
+                                       "rotation_policy_enabled": not kms_rot_disabled}]},
+              "defender_for_cloud": {
+                "alerts_enabled": not alerting_disabled,
+                "sentinel_integration": not alerting_disabled,
+                "enabled": not findings_dis,
+                "secure_score_enabled": not findings_dis,
+              },
+              "network": {"vnets": [{"name": "vnet-prod"}] if no_seg
+                          else [{"name": "vnet-prod"}, {"name": "vnet-dmz"}]},
+              "backup": {
+                "backup_vault_enabled": not backup_dis,
+                "retention_days": 0 if backup_dis else 35,
+              },
+              "azure_policy": {
+                "policy_assignments_enabled": not drift_dis,
+                "defender_posture_enabled": not drift_dis,
               },
             },
             "gcp": {
               "cloud_storage": {"buckets": [{
                 "name": "gs-prod",
-                "public_access_prevention": "unspecified" if public_bucket_gcp else "enforced",
-                "uniform_bucket_level_access": not public_bucket_gcp,
+                "public_access_prevention": "unspecified" if public_bucket else "enforced",
+                "uniform_bucket_level_access": not public_bucket,
               }]},
               "audit_logs": {"admin_activity_enabled": not logging_disabled},
-              "iam": {"service_accounts": [{"name": "svc-dataflow@proj.iam", "last_used_days": 10}]},
+              "iam": {"service_accounts": [{"name": "svc-dataflow@proj.iam",
+                                             "last_used_days": 10}]},
               "vpc": {"firewall_rules": ([{
                 "name": "allow-all-inbound",
                 "source_ranges": ["0.0.0.0/0"],
                 "action": "allow",
                 "ports": ["all"],
-              }] if permissive_fw_gcp else [])},
+              }] if perm_fw else [])},
+              "cloud_kms": {"keys": [{"name": "prod-key-01",
+                                       "rotation_schedule_enabled": not kms_rot_disabled}]},
+              "security_command_center": {
+                "findings_enabled": not alerting_disabled,
+                "alerting_policies_enabled": not alerting_disabled,
+                "premium_enabled": not findings_dis,
+                "asset_inventory_enabled": not findings_dis,
+              },
+              "vpc_networks": {"networks": [{"name": "vpc-prod"}] if no_seg
+                               else [{"name": "vpc-prod"}, {"name": "vpc-restricted"}]},
+              "backup": {
+                "automated_backups_enabled": not backup_dis,
+                "retention_days": 0 if backup_dis else 35,
+              },
+              "org_policy": {
+                "constraints_enabled": not drift_dis,
+                "security_health_analytics_enabled": not drift_dis,
+              },
             },
           }
 
@@ -246,7 +358,8 @@ jobs:
             json.dump(meta, f, indent=2)
 
           snapshot = []
-          for sc in ["sc-01","sc-02","sc-03","sc-04","sc-05","sc-06","sc-custom"]:
+          for sc in ["sc-01","sc-02","sc-03","sc-04","sc-05","sc-06",
+                     "sc-07","sc-08","sc-custom"]:
             path = f"results/{sc}.json"
             if os.path.exists(path):
               with open(path) as f:
@@ -260,7 +373,8 @@ jobs:
           history_entry = {
             "run_number": run_number, "timestamp": ts,
             "triggered_by": actor, "scenario": scenario, "run_url": run_url,
-            "summary": {"total_checks": total, "passed": passed, "failed": failed, "compliance_rate": rate},
+            "summary": {"total_checks": total, "passed": passed,
+                        "failed": failed, "compliance_rate": rate},
             "scenarios": snapshot
           }
 
