@@ -1,1 +1,119 @@
-
+{
+  "scenario_id": "SC-07",
+  "description": "Full 15-control compliant baseline — all new controls correctly configured across all three providers",
+  "expected_outcome": "All 15 controls PASS",
+  "key_controls_tested": ["ENC-03", "LOG-03", "NET-02", "RES-01", "RES-02", "RES-03"],
+  "aws": {
+    "iam": {
+      "policies": [{"name": "ReadOnlyPolicy", "actions": ["s3:GetObject"]}],
+      "users": [
+        {"username": "ops-user",   "mfa_enabled": true, "last_used_days": 5},
+        {"username": "admin-user", "mfa_enabled": true, "last_used_days": 12}
+      ]
+    },
+    "s3": {"buckets": [{"name": "prod-data", "default_encryption_enabled": true}]},
+    "cloudtrail": {
+      "trails": [{"name": "mgmt-trail", "is_logging": true}],
+      "log_file_validation_enabled": true,
+      "s3_object_lock_enabled": true,
+      "retention_days": 365
+    },
+    "ec2": {"security_groups": []},
+    "kms": {
+      "keys": [
+        {"key_id": "key-prod-01", "rotation_enabled": true},
+        {"key_id": "key-prod-02", "rotation_enabled": true}
+      ]
+    },
+    "monitoring": {
+      "cloudwatch_alarms_enabled": true,
+      "security_hub_enabled": true
+    },
+    "vpc": {
+      "vpcs": [
+        {"vpc_id": "vpc-prod",    "name": "production"},
+        {"vpc_id": "vpc-staging", "name": "staging"}
+      ]
+    },
+    "backup": {
+      "backup_plan_enabled": true,
+      "retention_days": 35
+    },
+    "aws_config": {
+      "config_rules_enabled": true,
+      "drift_detection_enabled": true
+    },
+    "security_hub": {"enabled": true}
+  },
+  "azure": {
+    "conditional_access": {"mfa_policy_enabled": true},
+    "storage_accounts": [{"name": "prodstore01", "minimum_tls_version": "TLS1_2"}],
+    "diagnostic_settings": {
+      "activity_log_enabled": true,
+      "log_retention_days": 90,
+      "immutable_storage_enabled": true
+    },
+    "key_vault": {
+      "keys": [{"name": "prod-key-01", "rotation_policy_enabled": true}]
+    },
+    "defender_for_cloud": {
+      "alerts_enabled": true,
+      "sentinel_integration": true,
+      "enabled": true,
+      "secure_score_enabled": true
+    },
+    "network": {
+      "vnets": [
+        {"name": "vnet-prod"},
+        {"name": "vnet-dmz"}
+      ]
+    },
+    "backup": {
+      "backup_vault_enabled": true,
+      "retention_days": 35
+    },
+    "azure_policy": {
+      "policy_assignments_enabled": true,
+      "defender_posture_enabled": true
+    }
+  },
+  "gcp": {
+    "cloud_storage": {
+      "buckets": [{
+        "name": "gs-prod",
+        "public_access_prevention": "enforced",
+        "uniform_bucket_level_access": true
+      }]
+    },
+    "audit_logs": {"admin_activity_enabled": true},
+    "iam": {
+      "service_accounts": [
+        {"name": "svc-dataflow@proj.iam", "last_used_days": 14}
+      ]
+    },
+    "vpc": {"firewall_rules": []},
+    "cloud_kms": {
+      "keys": [{"name": "prod-key-01", "rotation_schedule_enabled": true}]
+    },
+    "security_command_center": {
+      "findings_enabled": true,
+      "alerting_policies_enabled": true,
+      "premium_enabled": true,
+      "asset_inventory_enabled": true
+    },
+    "vpc_networks": {
+      "networks": [
+        {"name": "vpc-prod"},
+        {"name": "vpc-restricted"}
+      ]
+    },
+    "backup": {
+      "automated_backups_enabled": true,
+      "retention_days": 35
+    },
+    "org_policy": {
+      "constraints_enabled": true,
+      "security_health_analytics_enabled": true
+    }
+  }
+}
