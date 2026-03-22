@@ -1,0 +1,467 @@
+{
+  "report_metadata": {
+    "framework": "AMCAF v1.0",
+    "generated_at": "2026-03-22T20:28:32.946567Z",
+    "total_checks": 25,
+    "passed": 23,
+    "failed": 2,
+    "compliance_rate": "92.0%",
+    "framework_filter": "CSSF"
+  },
+  "findings": [
+    {
+      "control_id": "IAM-01",
+      "provider": "AWS",
+      "domain": "Identity & Access Management",
+      "objective": "Privileged access restricted; least-privilege enforced",
+      "regulatory_refs": [
+        "NIST CSF PR.AC-4",
+        "ISO 27001 A.9.2",
+        "DORA Art. 9",
+        "CSSF 22/806 \u00a73.2",
+        "MAS TRM 6.1",
+        "PCI DSS v4.0 Req 7",
+        "SOC 2 CC6.3"
+      ],
+      "status": "PASS",
+      "detail": "IAM policies comply with least-privilege requirement",
+      "config_attribute": "iam.policies[].actions"
+    },
+    {
+      "control_id": "IAM-02",
+      "provider": "AWS",
+      "domain": "Identity & Access Management",
+      "objective": "MFA enforced for all administrative access",
+      "regulatory_refs": [
+        "FCA PS21/3",
+        "NIST CSF PR.AC-7",
+        "ISO 27001 A.9.4",
+        "CSSF 22/806 \u00a73.3",
+        "MAS TRM 6.2",
+        "PCI DSS v4.0 Req 8",
+        "SOC 2 CC6.1"
+      ],
+      "status": "PASS",
+      "detail": "MFA enabled for all IAM users",
+      "config_attribute": "iam.users[].mfa_enabled"
+    },
+    {
+      "control_id": "LOG-01",
+      "provider": "AWS",
+      "domain": "Logging & Monitoring",
+      "objective": "Management plane audit logging enabled in all regions",
+      "regulatory_refs": [
+        "DORA Art. 10",
+        "FCA PS21/3",
+        "ISO 27001 A.12.4",
+        "CSSF 22/806 \u00a75.1",
+        "MAS TRM 11.1",
+        "PCI DSS v4.0 Req 10",
+        "SOC 2 CC7.2"
+      ],
+      "status": "PASS",
+      "detail": "CloudTrail logging active across all configured trails",
+      "config_attribute": "cloudtrail.trails[].is_logging"
+    },
+    {
+      "control_id": "LOG-02",
+      "provider": "AWS",
+      "domain": "Logging & Monitoring",
+      "objective": "Audit log retention meets minimum period; tamper protection enabled",
+      "regulatory_refs": [
+        "DORA Art. 10",
+        "FCA PS21/3",
+        "ISO 27001 A.12.4.1",
+        "UK GDPR Art. 5(2)",
+        "CSSF 22/806 \u00a75.2",
+        "MAS TRM 11.2",
+        "PCI DSS v4.0 Req 10.7",
+        "SOC 2 CC7.2"
+      ],
+      "status": "FAIL",
+      "detail": "Log integrity/retention failures: S3 Object Lock not configured on log bucket; retention 180 days below 365-day minimum",
+      "config_attribute": "cloudtrail.log_file_validation_enabled | cloudtrail.s3_object_lock_enabled | cloudtrail.retention_days"
+    },
+    {
+      "control_id": "LOG-03",
+      "provider": "AWS",
+      "domain": "Logging & Monitoring",
+      "objective": "Real-time alerting configured for security events and anomalies",
+      "regulatory_refs": [
+        "DORA Art. 10",
+        "FCA PS21/3",
+        "ISO 27001 A.12.4",
+        "NIST CSF DE.AE-1",
+        "CSSF 22/806 \u00a75.3",
+        "MAS TRM 11.3",
+        "PCI DSS v4.0 Req 10.6",
+        "SOC 2 CC7.3"
+      ],
+      "status": "PASS",
+      "detail": "CloudWatch alarms and Security Hub enabled for real-time alerting",
+      "config_attribute": "monitoring.cloudwatch_alarms_enabled | monitoring.security_hub_enabled"
+    },
+    {
+      "control_id": "NET-01",
+      "provider": "AWS",
+      "domain": "Network Security",
+      "objective": "Default-deny network access; no unrestricted inbound rules",
+      "regulatory_refs": [
+        "NIST CSF PR.AC-5",
+        "ISO 27001 A.13.1",
+        "DORA Art. 9",
+        "CSSF 22/806 \u00a74.1",
+        "MAS TRM 7.1",
+        "PCI DSS v4.0 Req 1",
+        "SOC 2 CC6.6"
+      ],
+      "status": "PASS",
+      "detail": "No security groups permit unrestricted inbound access",
+      "config_attribute": "ec2.security_groups[].inbound_rules"
+    },
+    {
+      "control_id": "RES-01",
+      "provider": "AWS",
+      "domain": "Operational Resilience",
+      "objective": "Automated backups configured with defined retention and RPO",
+      "regulatory_refs": [
+        "DORA Art. 12",
+        "FCA PS21/3",
+        "ISO 27001 A.17.1",
+        "NIST CSF PR.IP-4",
+        "CSSF 22/806 \u00a76.1",
+        "MAS TRM 12.1",
+        "PCI DSS v4.0 Req 12.3",
+        "SOC 2 A1.2"
+      ],
+      "status": "PASS",
+      "detail": "AWS Backup plan active; retention >= 30 days",
+      "config_attribute": "backup.backup_plan_enabled | backup.retention_days"
+    },
+    {
+      "control_id": "RES-02",
+      "provider": "AWS",
+      "domain": "Operational Resilience",
+      "objective": "Infrastructure-as-code enforced; configuration drift continuously detected",
+      "regulatory_refs": [
+        "DORA Art. 9",
+        "FCA PS21/3",
+        "ISO 27001 A.12.1",
+        "NIST CSF PR.IP-1",
+        "CSSF 22/806 \u00a76.2",
+        "MAS TRM 12.2",
+        "SOC 2 CC8.1"
+      ],
+      "status": "PASS",
+      "detail": "AWS Config rules active; CloudFormation drift detection enabled",
+      "config_attribute": "aws_config.config_rules_enabled | aws_config.drift_detection_enabled"
+    },
+    {
+      "control_id": "RES-03",
+      "provider": "AWS",
+      "domain": "Operational Resilience",
+      "objective": "Centralised security findings aggregation and remediation tracking enabled",
+      "regulatory_refs": [
+        "DORA Art. 10",
+        "FCA PS21/3",
+        "ISO 27001 A.16.1",
+        "NIST CSF RS.AN-1",
+        "CSSF 22/806 \u00a75.4",
+        "MAS TRM 11.4",
+        "SOC 2 CC7.4"
+      ],
+      "status": "PASS",
+      "detail": "AWS Security Hub enabled; centralised findings aggregation active",
+      "config_attribute": "security_hub.enabled"
+    },
+    {
+      "control_id": "IAM-02",
+      "provider": "Azure",
+      "domain": "Identity & Access Management",
+      "objective": "MFA enforced for all administrative access",
+      "regulatory_refs": [
+        "FCA PS21/3",
+        "NIST CSF PR.AC-7",
+        "ISO 27001 A.9.4",
+        "CSSF 22/806 \u00a73.3",
+        "MAS TRM 6.2",
+        "PCI DSS v4.0 Req 8",
+        "SOC 2 CC6.1"
+      ],
+      "status": "PASS",
+      "detail": "Conditional Access MFA policy is active",
+      "config_attribute": "conditional_access.mfa_policy_enabled"
+    },
+    {
+      "control_id": "LOG-01",
+      "provider": "Azure",
+      "domain": "Logging & Monitoring",
+      "objective": "Management plane audit logging enabled in all regions",
+      "regulatory_refs": [
+        "DORA Art. 10",
+        "FCA PS21/3",
+        "ISO 27001 A.12.4",
+        "CSSF 22/806 \u00a75.1",
+        "MAS TRM 11.1",
+        "PCI DSS v4.0 Req 10",
+        "SOC 2 CC7.2"
+      ],
+      "status": "PASS",
+      "detail": "Activity Log diagnostic settings configured",
+      "config_attribute": "diagnostic_settings.activity_log_enabled"
+    },
+    {
+      "control_id": "LOG-02",
+      "provider": "Azure",
+      "domain": "Logging & Monitoring",
+      "objective": "Audit log retention meets minimum period; tamper protection enabled",
+      "regulatory_refs": [
+        "DORA Art. 10",
+        "FCA PS21/3",
+        "ISO 27001 A.12.4.1",
+        "UK GDPR Art. 5(2)",
+        "CSSF 22/806 \u00a75.2",
+        "MAS TRM 11.2",
+        "PCI DSS v4.0 Req 10.7",
+        "SOC 2 CC7.2"
+      ],
+      "status": "FAIL",
+      "detail": "Log retention/integrity failures: Log Analytics retention 60 days below 90-day minimum",
+      "config_attribute": "diagnostic_settings.log_retention_days | diagnostic_settings.immutable_storage_enabled"
+    },
+    {
+      "control_id": "LOG-03",
+      "provider": "Azure",
+      "domain": "Logging & Monitoring",
+      "objective": "Real-time alerting configured for security events and anomalies",
+      "regulatory_refs": [
+        "DORA Art. 10",
+        "FCA PS21/3",
+        "ISO 27001 A.12.4",
+        "NIST CSF DE.AE-1",
+        "CSSF 22/806 \u00a75.3",
+        "MAS TRM 11.3",
+        "PCI DSS v4.0 Req 10.6",
+        "SOC 2 CC7.3"
+      ],
+      "status": "PASS",
+      "detail": "Defender for Cloud alerts active; Sentinel integration configured",
+      "config_attribute": "defender_for_cloud.alerts_enabled | defender_for_cloud.sentinel_integration"
+    },
+    {
+      "control_id": "RES-01",
+      "provider": "Azure",
+      "domain": "Operational Resilience",
+      "objective": "Automated backups configured with defined retention and RPO",
+      "regulatory_refs": [
+        "DORA Art. 12",
+        "FCA PS21/3",
+        "ISO 27001 A.17.1",
+        "NIST CSF PR.IP-4",
+        "CSSF 22/806 \u00a76.1",
+        "MAS TRM 12.1",
+        "PCI DSS v4.0 Req 12.3",
+        "SOC 2 A1.2"
+      ],
+      "status": "PASS",
+      "detail": "Azure Backup vault active; retention >= 30 days",
+      "config_attribute": "backup.backup_vault_enabled | backup.retention_days"
+    },
+    {
+      "control_id": "RES-02",
+      "provider": "Azure",
+      "domain": "Operational Resilience",
+      "objective": "Infrastructure-as-code enforced; configuration drift continuously detected",
+      "regulatory_refs": [
+        "DORA Art. 9",
+        "FCA PS21/3",
+        "ISO 27001 A.12.1",
+        "NIST CSF PR.IP-1",
+        "CSSF 22/806 \u00a76.2",
+        "MAS TRM 12.2",
+        "SOC 2 CC8.1"
+      ],
+      "status": "PASS",
+      "detail": "Azure Policy assignments active; Defender posture management enabled",
+      "config_attribute": "azure_policy.policy_assignments_enabled | azure_policy.defender_posture_enabled"
+    },
+    {
+      "control_id": "RES-03",
+      "provider": "Azure",
+      "domain": "Operational Resilience",
+      "objective": "Centralised security findings aggregation and remediation tracking enabled",
+      "regulatory_refs": [
+        "DORA Art. 10",
+        "FCA PS21/3",
+        "ISO 27001 A.16.1",
+        "NIST CSF RS.AN-1",
+        "CSSF 22/806 \u00a75.4",
+        "MAS TRM 11.4",
+        "SOC 2 CC7.4"
+      ],
+      "status": "PASS",
+      "detail": "Microsoft Defender for Cloud enabled; secure score active",
+      "config_attribute": "defender_for_cloud.enabled | defender_for_cloud.secure_score_enabled"
+    },
+    {
+      "control_id": "NET-01",
+      "provider": "GCP",
+      "domain": "Network Security",
+      "objective": "Default-deny network access; no unrestricted inbound rules",
+      "regulatory_refs": [
+        "NIST CSF PR.AC-5",
+        "ISO 27001 A.13.1",
+        "DORA Art. 9",
+        "CSSF 22/806 \u00a74.1",
+        "MAS TRM 7.1",
+        "PCI DSS v4.0 Req 1",
+        "SOC 2 CC6.6"
+      ],
+      "status": "PASS",
+      "detail": "All GCS buckets have public access prevention enforced",
+      "config_attribute": "cloud_storage.buckets[].public_access_prevention"
+    },
+    {
+      "control_id": "LOG-01",
+      "provider": "GCP",
+      "domain": "Logging & Monitoring",
+      "objective": "Management plane audit logging enabled in all regions",
+      "regulatory_refs": [
+        "DORA Art. 10",
+        "FCA PS21/3",
+        "ISO 27001 A.12.4",
+        "CSSF 22/806 \u00a75.1",
+        "MAS TRM 11.1",
+        "PCI DSS v4.0 Req 10",
+        "SOC 2 CC7.2"
+      ],
+      "status": "PASS",
+      "detail": "Admin Activity audit logging is enabled",
+      "config_attribute": "audit_logs.admin_activity_enabled"
+    },
+    {
+      "control_id": "LOG-03",
+      "provider": "GCP",
+      "domain": "Logging & Monitoring",
+      "objective": "Real-time alerting configured for security events and anomalies",
+      "regulatory_refs": [
+        "DORA Art. 10",
+        "FCA PS21/3",
+        "ISO 27001 A.12.4",
+        "NIST CSF DE.AE-1",
+        "CSSF 22/806 \u00a75.3",
+        "MAS TRM 11.3",
+        "PCI DSS v4.0 Req 10.6",
+        "SOC 2 CC7.3"
+      ],
+      "status": "PASS",
+      "detail": "Security Command Center findings and alerting policies active",
+      "config_attribute": "security_command_center.findings_enabled | security_command_center.alerting_policies_enabled"
+    },
+    {
+      "control_id": "RES-01",
+      "provider": "GCP",
+      "domain": "Operational Resilience",
+      "objective": "Automated backups configured with defined retention and RPO",
+      "regulatory_refs": [
+        "DORA Art. 12",
+        "FCA PS21/3",
+        "ISO 27001 A.17.1",
+        "NIST CSF PR.IP-4",
+        "CSSF 22/806 \u00a76.1",
+        "MAS TRM 12.1",
+        "PCI DSS v4.0 Req 12.3",
+        "SOC 2 A1.2"
+      ],
+      "status": "PASS",
+      "detail": "Cloud SQL automated backups active; retention >= 30 days",
+      "config_attribute": "backup.automated_backups_enabled | backup.retention_days"
+    },
+    {
+      "control_id": "RES-02",
+      "provider": "GCP",
+      "domain": "Operational Resilience",
+      "objective": "Infrastructure-as-code enforced; configuration drift continuously detected",
+      "regulatory_refs": [
+        "DORA Art. 9",
+        "FCA PS21/3",
+        "ISO 27001 A.12.1",
+        "NIST CSF PR.IP-1",
+        "CSSF 22/806 \u00a76.2",
+        "MAS TRM 12.2",
+        "SOC 2 CC8.1"
+      ],
+      "status": "PASS",
+      "detail": "Organisation Policy constraints active; Security Health Analytics enabled",
+      "config_attribute": "org_policy.constraints_enabled | org_policy.security_health_analytics_enabled"
+    },
+    {
+      "control_id": "RES-03",
+      "provider": "GCP",
+      "domain": "Operational Resilience",
+      "objective": "Centralised security findings aggregation and remediation tracking enabled",
+      "regulatory_refs": [
+        "DORA Art. 10",
+        "FCA PS21/3",
+        "ISO 27001 A.16.1",
+        "NIST CSF RS.AN-1",
+        "CSSF 22/806 \u00a75.4",
+        "MAS TRM 11.4",
+        "SOC 2 CC7.4"
+      ],
+      "status": "PASS",
+      "detail": "Security Command Center Premium active; Cloud Asset Inventory configured",
+      "config_attribute": "security_command_center.premium_enabled | security_command_center.asset_inventory_enabled"
+    },
+    {
+      "control_id": "IAM-04",
+      "provider": "ORG",
+      "domain": "Identity & Access Management",
+      "objective": "Privileged access workstations enforced; standing privilege eliminated",
+      "regulatory_refs": [
+        "CSSF 22/806 \u00a73.4",
+        "MAS TRM 6.4",
+        "ISO 27001 A.9.2.3",
+        "NIST CSF PR.AC-4",
+        "PCI DSS v4.0 Req 7.2"
+      ],
+      "status": "PASS",
+      "detail": "PAW enforced; JIT access configured; session recording active",
+      "config_attribute": "org.privileged_access.paw_enforced | org.privileged_access.just_in_time_access | org.privileged_access.session_recording_enabled"
+    },
+    {
+      "control_id": "INC-01",
+      "provider": "ORG",
+      "domain": "Incident Management",
+      "objective": "ICT incidents classified, escalated and notified to regulators within required timeframes",
+      "regulatory_refs": [
+        "DORA Art. 19",
+        "CSSF 22/806 \u00a77.1",
+        "FCA PS21/3",
+        "ISO 27001 A.16.1",
+        "NIST CSF RS.CO-3",
+        "MAS TRM 13.1"
+      ],
+      "status": "PASS",
+      "detail": "Incident classification, escalation and regulatory notification configured; major incident SLA <= 4 hours",
+      "config_attribute": "org.incident_management.classification_framework_defined | org.incident_management.escalation_process_defined | org.incident_management.regulatory_notification_enabled | org.incident_management.major_incident_notification_hours"
+    },
+    {
+      "control_id": "TPM-01",
+      "provider": "ORG",
+      "domain": "Third-Party Management",
+      "objective": "Critical ICT third-party providers identified, assessed and contractually governed",
+      "regulatory_refs": [
+        "DORA Art. 28",
+        "CSSF 22/806 \u00a78.1",
+        "FCA PS21/3",
+        "ISO 27001 A.15.1",
+        "NIST CSF ID.SC-2",
+        "MAS TRM 14.1"
+      ],
+      "status": "PASS",
+      "detail": "Critical provider register maintained; risk assessments conducted; audit rights and exit strategy secured",
+      "config_attribute": "org.third_party_management.critical_provider_register | org.third_party_management.risk_assessments_conducted | org.third_party_management.contractual_audit_rights | org.third_party_management.exit_strategy_defined"
+    }
+  ]
+}
