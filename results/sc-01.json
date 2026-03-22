@@ -1,0 +1,240 @@
+{
+  "report_metadata": {
+    "framework": "AMCAF v1.0",
+    "generated_at": "2026-03-22T17:06:27.605245Z",
+    "total_checks": 16,
+    "passed": 16,
+    "failed": 0,
+    "compliance_rate": "100.0%"
+  },
+  "findings": [
+    {
+      "control_id": "IAM-01",
+      "provider": "AWS",
+      "domain": "Identity & Access Management",
+      "objective": "Privileged access restricted; least-privilege enforced",
+      "regulatory_refs": [
+        "NIST CSF PR.AC-4",
+        "ISO 27001 A.9.2",
+        "DORA Art. 9"
+      ],
+      "status": "PASS",
+      "detail": "IAM policies comply with least-privilege requirement",
+      "config_attribute": "iam.policies[].actions"
+    },
+    {
+      "control_id": "IAM-02",
+      "provider": "AWS",
+      "domain": "Identity & Access Management",
+      "objective": "MFA enforced for all administrative access",
+      "regulatory_refs": [
+        "FCA PS21/3",
+        "NIST CSF PR.AC-7",
+        "ISO 27001 A.9.4"
+      ],
+      "status": "PASS",
+      "detail": "MFA enabled for all IAM users",
+      "config_attribute": "iam.users[].mfa_enabled"
+    },
+    {
+      "control_id": "IAM-03",
+      "provider": "AWS",
+      "domain": "Identity & Access Management",
+      "objective": "Periodic access review enforced; dormant accounts disabled",
+      "regulatory_refs": [
+        "DORA Art. 9",
+        "FCA PS21/3",
+        "ISO 27001 A.9.2.5",
+        "NIST CSF PR.AC-1"
+      ],
+      "status": "PASS",
+      "detail": "No dormant accounts found; all users active within 90 days",
+      "config_attribute": "iam.users[].last_used_days"
+    },
+    {
+      "control_id": "ENC-01",
+      "provider": "AWS",
+      "domain": "Data Protection & Encryption",
+      "objective": "Data at rest encrypted by default for all storage resources",
+      "regulatory_refs": [
+        "UK GDPR Art. 32",
+        "ISO 27001 A.10.1",
+        "NIST CSF PR.DS-1"
+      ],
+      "status": "PASS",
+      "detail": "All S3 buckets have default encryption enabled",
+      "config_attribute": "s3.buckets[].default_encryption_enabled"
+    },
+    {
+      "control_id": "LOG-01",
+      "provider": "AWS",
+      "domain": "Logging & Monitoring",
+      "objective": "Management plane audit logging enabled in all regions",
+      "regulatory_refs": [
+        "DORA Art. 10",
+        "FCA PS21/3",
+        "ISO 27001 A.12.4"
+      ],
+      "status": "PASS",
+      "detail": "CloudTrail logging active across all configured trails",
+      "config_attribute": "cloudtrail.trails[].is_logging"
+    },
+    {
+      "control_id": "LOG-02",
+      "provider": "AWS",
+      "domain": "Logging & Monitoring",
+      "objective": "Audit log retention meets minimum period; tamper protection enabled",
+      "regulatory_refs": [
+        "DORA Art. 10",
+        "FCA PS21/3",
+        "ISO 27001 A.12.4.1",
+        "UK GDPR Art. 5(2)"
+      ],
+      "status": "PASS",
+      "detail": "Log file validation enabled; S3 Object Lock configured; retention >= 365 days",
+      "config_attribute": "cloudtrail.log_file_validation_enabled | cloudtrail.s3_object_lock_enabled | cloudtrail.retention_days"
+    },
+    {
+      "control_id": "NET-01",
+      "provider": "AWS",
+      "domain": "Network Security",
+      "objective": "Default-deny network access; no unrestricted inbound rules",
+      "regulatory_refs": [
+        "NIST CSF PR.AC-5",
+        "ISO 27001 A.13.1",
+        "DORA Art. 9"
+      ],
+      "status": "PASS",
+      "detail": "No security groups permit unrestricted inbound access",
+      "config_attribute": "ec2.security_groups[].inbound_rules"
+    },
+    {
+      "control_id": "NET-03",
+      "provider": "AWS",
+      "domain": "Network Security",
+      "objective": "Public management interfaces restricted to authorised sources",
+      "regulatory_refs": [
+        "FCA PS21/3",
+        "NIST CSF PR.AC-5",
+        "ISO 27001 A.9.1.2"
+      ],
+      "status": "PASS",
+      "detail": "No management ports (22/3389) exposed to 0.0.0.0/0",
+      "config_attribute": "ec2.security_groups[].inbound_rules[port=22|3389]"
+    },
+    {
+      "control_id": "IAM-02",
+      "provider": "Azure",
+      "domain": "Identity & Access Management",
+      "objective": "MFA enforced for all administrative access",
+      "regulatory_refs": [
+        "FCA PS21/3",
+        "NIST CSF PR.AC-7",
+        "ISO 27001 A.9.4"
+      ],
+      "status": "PASS",
+      "detail": "Conditional Access MFA policy is active",
+      "config_attribute": "conditional_access.mfa_policy_enabled"
+    },
+    {
+      "control_id": "ENC-02",
+      "provider": "Azure",
+      "domain": "Data Protection & Encryption",
+      "objective": "Data in transit protected; unencrypted protocols disabled",
+      "regulatory_refs": [
+        "UK GDPR Art. 32",
+        "ISO 27001 A.10.1",
+        "NIST CSF PR.DS-2"
+      ],
+      "status": "PASS",
+      "detail": "All storage accounts enforce minimum TLS 1.2",
+      "config_attribute": "storage_accounts[].minimum_tls_version"
+    },
+    {
+      "control_id": "LOG-01",
+      "provider": "Azure",
+      "domain": "Logging & Monitoring",
+      "objective": "Management plane audit logging enabled in all regions",
+      "regulatory_refs": [
+        "DORA Art. 10",
+        "FCA PS21/3",
+        "ISO 27001 A.12.4"
+      ],
+      "status": "PASS",
+      "detail": "Activity Log diagnostic settings configured",
+      "config_attribute": "diagnostic_settings.activity_log_enabled"
+    },
+    {
+      "control_id": "LOG-02",
+      "provider": "Azure",
+      "domain": "Logging & Monitoring",
+      "objective": "Audit log retention meets minimum period; tamper protection enabled",
+      "regulatory_refs": [
+        "DORA Art. 10",
+        "FCA PS21/3",
+        "ISO 27001 A.12.4.1",
+        "UK GDPR Art. 5(2)"
+      ],
+      "status": "PASS",
+      "detail": "Log Analytics retention >= 90 days; immutable storage enabled",
+      "config_attribute": "diagnostic_settings.log_retention_days | diagnostic_settings.immutable_storage_enabled"
+    },
+    {
+      "control_id": "NET-01",
+      "provider": "GCP",
+      "domain": "Network Security",
+      "objective": "Default-deny network access; no unrestricted inbound rules",
+      "regulatory_refs": [
+        "NIST CSF PR.AC-5",
+        "ISO 27001 A.13.1",
+        "DORA Art. 9"
+      ],
+      "status": "PASS",
+      "detail": "All GCS buckets have public access prevention enforced",
+      "config_attribute": "cloud_storage.buckets[].public_access_prevention"
+    },
+    {
+      "control_id": "LOG-01",
+      "provider": "GCP",
+      "domain": "Logging & Monitoring",
+      "objective": "Management plane audit logging enabled in all regions",
+      "regulatory_refs": [
+        "DORA Art. 10",
+        "FCA PS21/3",
+        "ISO 27001 A.12.4"
+      ],
+      "status": "PASS",
+      "detail": "Admin Activity audit logging is enabled",
+      "config_attribute": "audit_logs.admin_activity_enabled"
+    },
+    {
+      "control_id": "IAM-03",
+      "provider": "GCP",
+      "domain": "Identity & Access Management",
+      "objective": "Periodic access review enforced; dormant accounts disabled",
+      "regulatory_refs": [
+        "DORA Art. 9",
+        "FCA PS21/3",
+        "ISO 27001 A.9.2.5",
+        "NIST CSF PR.AC-1"
+      ],
+      "status": "PASS",
+      "detail": "No dormant service accounts; all active within 90 days",
+      "config_attribute": "iam.service_accounts[].last_used_days"
+    },
+    {
+      "control_id": "NET-03",
+      "provider": "GCP",
+      "domain": "Network Security",
+      "objective": "Public management interfaces restricted to authorised sources",
+      "regulatory_refs": [
+        "FCA PS21/3",
+        "NIST CSF PR.AC-5",
+        "ISO 27001 A.9.1.2"
+      ],
+      "status": "PASS",
+      "detail": "No firewall rules permitting all inbound traffic",
+      "config_attribute": "vpc.firewall_rules[].source_ranges + action"
+    }
+  ]
+}
