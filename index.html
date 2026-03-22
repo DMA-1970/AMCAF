@@ -15,7 +15,6 @@
   .header-left p{font-size:13px;color:#8b949e}
   .run-btn{display:inline-flex;align-items:center;gap:8px;background:#238636;color:#fff;border:1px solid #2ea043;border-radius:6px;padding:8px 16px;font-size:13px;font-weight:500;cursor:pointer;text-decoration:none;white-space:nowrap;transition:background .15s}
   .run-btn:hover{background:#2ea043;text-decoration:none}
-  .run-btn svg{flex-shrink:0}
 
   .meta-bar{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap}
   .meta-card{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:14px 18px;min-width:120px;flex:1}
@@ -30,6 +29,14 @@
   .last-run-bar span{color:#e6edf3}
   .pulse{display:inline-block;width:8px;height:8px;border-radius:50%;background:#3fb950;margin-right:6px;animation:pulse 2s infinite}
   @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+  /* tabs */
+  .tabs{display:flex;gap:0;margin-bottom:20px;border-bottom:1px solid #30363d}
+  .tab{padding:10px 18px;font-size:13px;font-weight:500;color:#8b949e;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:color .15s}
+  .tab:hover{color:#e6edf3}
+  .tab.active{color:#f0f6fc;border-bottom-color:#58a6ff}
+  .tab-panel{display:none}
+  .tab-panel.active{display:block}
 
   .legend{display:flex;gap:16px;margin-bottom:14px;font-size:12px;color:#8b949e;flex-wrap:wrap}
   .legend span{display:flex;align-items:center;gap:6px}
@@ -47,11 +54,12 @@
   .badge.pass{background:#1a3a2a;color:#3fb950;border:1px solid #2ea043}
   .badge.fail{background:#3a1a1a;color:#f85149;border:1px solid #da3633}
   .badge.rate{background:#1a2a3a;color:#58a6ff;border:1px solid #1f6feb}
+  .badge.perfect{background:#1a3a2a;color:#3fb950;border:1px solid #2ea043}
   .chevron{color:#8b949e;font-size:11px;transition:transform .2s;flex-shrink:0}
   .chevron.open{transform:rotate(90deg)}
-
   .sc-body{display:none;border-top:1px solid #30363d;overflow-x:auto}
   .sc-body.open{display:block}
+
   table{width:100%;border-collapse:collapse;font-size:12px;min-width:600px}
   th{background:#0d1117;color:#8b949e;font-weight:500;text-align:left;padding:8px 14px;border-bottom:1px solid #30363d;white-space:nowrap}
   td{padding:8px 14px;border-bottom:1px solid #21262d;vertical-align:top}
@@ -69,8 +77,24 @@
   .detail-fail{color:#f85149;font-size:12px}
   .detail-pass{color:#e6edf3;font-size:12px}
 
+  /* history tab */
+  .history-grid{display:flex;flex-direction:column;gap:10px}
+  .hist-card{background:#161b22;border:1px solid #30363d;border-radius:8px;overflow:hidden}
+  .hist-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;cursor:pointer;user-select:none;gap:12px}
+  .hist-header:hover{background:#1c2128}
+  .hist-meta{flex:1}
+  .hist-title{font-size:13px;font-weight:500;color:#f0f6fc}
+  .hist-sub{font-size:11px;color:#8b949e;margin-top:3px}
+  .hist-body{display:none;border-top:1px solid #30363d}
+  .hist-body.open{display:block}
+  .hist-scenarios{display:flex;flex-direction:column;gap:8px;padding:12px 16px}
+  .hist-sc-row{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#0d1117;border-radius:6px;font-size:12px;flex-wrap:wrap;gap:8px}
+  .hist-sc-label{color:#e6edf3;flex:1}
+  .hist-sc-badges{display:flex;gap:6px;flex-shrink:0}
+
+  .empty-history{text-align:center;padding:40px 20px;color:#8b949e;font-size:13px}
   .loading{text-align:center;padding:60px 20px;color:#8b949e;font-size:14px}
-  .error-msg{background:#3a1a1a;border:1px solid #da3633;border-radius:8px;padding:16px 20px;color:#f85149;font-size:13px;margin-bottom:20px}
+  .error-msg{background:#3a1a1a;border:1px solid #da3633;border-radius:8px;padding:14px 18px;color:#f85149;font-size:13px;margin-bottom:20px}
 
   footer{margin-top:28px;font-size:11px;color:#484f58;text-align:center;padding-bottom:8px}
 </style>
@@ -82,27 +106,39 @@
     <h1>AMCAF — Multi-Cloud Compliance Dashboard</h1>
     <p>Automated Multi-Cloud Compliance Assurance Framework &nbsp;·&nbsp; v1.0 &nbsp;·&nbsp; AWS · Azure · GCP</p>
   </div>
-  <a class="run-btn" id="run-link" href="https://github.com/DMA-1970/AMCAF/actions/workflows/run-simulation.yml" target="_blank" rel="noopener">
+  <a class="run-btn" href="https://github.com/DMA-1970/AMCAF/actions/workflows/run-simulation.yml" target="_blank" rel="noopener">
     <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0zm0 1.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13zm0 3a.75.75 0 0 1 .75.75v3.5l2.25 1.3a.75.75 0 1 1-.75 1.3L7.5 9.5A.75.75 0 0 1 7 8.75v-4A.75.75 0 0 1 8 4.5z"/></svg>
     Run simulation
   </a>
 </header>
 
 <div id="last-run-bar" class="last-run-bar" style="display:none">
-  <div><span class="pulse"></span>Last run: <span id="last-run-time">—</span> &nbsp;·&nbsp; Scenario: <span id="last-run-scenario">—</span> &nbsp;·&nbsp; By: <span id="last-run-actor">—</span></div>
-  <a id="last-run-link" href="#" target="_blank" rel="noopener">View run log →</a>
+  <div><span class="pulse"></span>Last run: <span id="lr-time">—</span> &nbsp;·&nbsp; Scenario: <span id="lr-scenario">—</span> &nbsp;·&nbsp; By: <span id="lr-actor">—</span></div>
+  <a id="lr-link" href="#" target="_blank" rel="noopener">View run log →</a>
 </div>
 
 <div id="error-area"></div>
 <div id="meta-bar" class="meta-bar"></div>
 
-<div class="legend">
-  <span><span class="dot pass"></span>PASS — control satisfied</span>
-  <span><span class="dot fail"></span>FAIL — misconfiguration detected</span>
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('latest')">Latest results</div>
+  <div class="tab" onclick="switchTab('history')" id="history-tab-label">Run history</div>
 </div>
 
-<div id="scenarios" class="scenario-grid">
-  <div class="loading">Loading latest results…</div>
+<div id="tab-latest" class="tab-panel active">
+  <div class="legend">
+    <span><span class="dot pass"></span>PASS — control satisfied</span>
+    <span><span class="dot fail"></span>FAIL — misconfiguration detected</span>
+  </div>
+  <div id="scenarios" class="scenario-grid">
+    <div class="loading">Loading latest results…</div>
+  </div>
+</div>
+
+<div id="tab-history" class="tab-panel">
+  <div id="history-grid" class="history-grid">
+    <div class="loading">Loading run history…</div>
+  </div>
 </div>
 
 <footer>
@@ -112,81 +148,95 @@
 
 <script>
 const BASE = 'https://raw.githubusercontent.com/DMA-1970/AMCAF/main/results/';
-const SCENARIOS = ['sc-01','sc-02','sc-03','sc-04','sc-05','sc-06'];
+const SC_IDS = ['sc-01','sc-02','sc-03','sc-04','sc-05','sc-06'];
+const SC_LABELS = {
+  'sc-01': 'SC-01 — Fully compliant baseline',
+  'sc-02': 'SC-02 — Over-privileged IAM (AWS) / MFA disabled (Azure)',
+  'sc-03': 'SC-03 — Encryption disabled (AWS) / Weak TLS (Azure) / Public bucket (GCP)',
+  'sc-04': 'SC-04 — Logging disabled across all providers',
+  'sc-05': 'SC-05 — Open SSH (AWS) / Permissive firewall (GCP)',
+  'sc-06': 'SC-06 — Dormant accounts (AWS, GCP) / Insufficient log retention (AWS, Azure)',
+};
+
+let cardCount = 0;
 
 async function fetchJSON(url) {
-  const r = await fetch(url + '?nocache=' + Date.now());
-  if (!r.ok) throw new Error(`${r.status} ${r.statusText}`);
+  const r = await fetch(url + '?nc=' + Date.now());
+  if (!r.ok) throw new Error(`${r.status}`);
   return r.json();
 }
 
-function showError(msg) {
-  document.getElementById('error-area').innerHTML =
-    `<div class="error-msg">⚠ ${msg}</div>`;
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach((t,i) => {
+    t.classList.toggle('active', ['latest','history'][i] === name);
+  });
+  document.querySelectorAll('.tab-panel').forEach(p => {
+    p.classList.toggle('active', p.id === 'tab-' + name);
+  });
+}
+
+function badge(cls, text) {
+  return `<span class="badge ${cls}">${text}</span>`;
+}
+
+function provSpan(p) {
+  return `<span class="prov ${p.toLowerCase()}">${p}</span>`;
+}
+
+function rateClass(rate) {
+  const n = parseFloat(rate);
+  return n === 100 ? 'perfect' : n >= 80 ? 'rate' : 'fail';
 }
 
 async function loadMeta() {
   try {
-    const meta = await fetchJSON(BASE + 'meta.json');
-    const bar = document.getElementById('last-run-bar');
-    bar.style.display = 'flex';
-    document.getElementById('last-run-time').textContent =
-      new Date(meta.last_run).toLocaleString();
-    document.getElementById('last-run-scenario').textContent = meta.scenario;
-    document.getElementById('last-run-actor').textContent   = meta.triggered_by;
-    const link = document.getElementById('last-run-link');
-    link.href = meta.run_url;
+    const m = await fetchJSON(BASE + 'meta.json');
+    document.getElementById('last-run-bar').style.display = 'flex';
+    document.getElementById('lr-time').textContent     = new Date(m.last_run).toLocaleString();
+    document.getElementById('lr-scenario').textContent = m.scenario;
+    document.getElementById('lr-actor').textContent    = m.triggered_by;
+    document.getElementById('lr-link').href            = m.run_url;
   } catch(_) {}
 }
 
-function buildMetaBar(allData) {
-  const total  = allData.reduce((s,d) => s + d.report_metadata.total_checks, 0);
-  const passed = allData.reduce((s,d) => s + d.report_metadata.passed, 0);
-  const failed = allData.reduce((s,d) => s + d.report_metadata.failed, 0);
+function buildMetaBar(datasets) {
+  const total  = datasets.reduce((s,d) => s + d.report_metadata.total_checks, 0);
+  const passed = datasets.reduce((s,d) => s + d.report_metadata.passed, 0);
+  const failed = datasets.reduce((s,d) => s + d.report_metadata.failed, 0);
   const rate   = total ? ((passed/total)*100).toFixed(1) : '0.0';
   document.getElementById('meta-bar').innerHTML = `
     <div class="meta-card neutral"><div class="val">${total}</div><div class="lbl">Total checks</div></div>
     <div class="meta-card pass"><div class="val">${passed}</div><div class="lbl">Passed</div></div>
     <div class="meta-card fail"><div class="val">${failed}</div><div class="lbl">Failed</div></div>
     <div class="meta-card rate"><div class="val">${rate}%</div><div class="lbl">Overall compliance</div></div>
-    <div class="meta-card neutral"><div class="val">0</div><div class="lbl">False positives</div></div>
-  `;
+    <div class="meta-card neutral"><div class="val">0</div><div class="lbl">False positives</div></div>`;
 }
 
-function buildScenarioCard(data, idx) {
-  const m    = data.report_metadata;
-  const rate = parseFloat(m.compliance_rate);
-  const rateClass = rate === 100 ? 'pass' : rate >= 80 ? 'rate' : 'fail';
+function buildScenarioCard(data, scId, idx) {
+  const m   = data.report_metadata;
+  const rc  = rateClass(m.compliance_rate);
   const rows = data.findings.map(f => `
     <tr class="${f.status==='FAIL'?'fail-row':''}">
       <td><span class="ctrl">${f.control_id}</span></td>
-      <td><span class="prov ${f.provider.toLowerCase()}">${f.provider}</span></td>
+      <td>${provSpan(f.provider)}</td>
       <td><span class="s-${f.status.toLowerCase()}">${f.status}</span></td>
       <td class="${f.status==='FAIL'?'detail-fail':'detail-pass'}">${f.detail}</td>
       <td><div class="refs">${f.regulatory_refs.join('<br>')}</div></td>
       <td><span class="attr">${f.config_attribute}</span></td>
     </tr>`).join('');
 
-  const title = m.framework + ' · ' + (data.scenario_id || `Scenario ${idx+1}`);
-  const label = data.findings.length > 0
-    ? data.findings[0].detail.split(':')[0]
-    : '';
-
-  // extract scenario label from first finding's scenario context
-  const scLabel = data.scenario_label || `Scenario ${idx+1}`;
-
   return `
     <div class="sc-card">
-      <div class="sc-header" onclick="toggle(${idx})">
-        <span class="sc-title">${scLabel}</span>
+      <div class="sc-header" onclick="toggleCard('sc-${idx}')">
+        <span class="sc-title">${SC_LABELS[scId] || scId.toUpperCase()}</span>
         <div class="sc-badges">
-          <span class="badge pass">${m.passed} pass</span>
-          ${m.failed > 0 ? `<span class="badge fail">${m.failed} fail</span>` : ''}
-          <span class="badge ${rateClass}">${m.compliance_rate}</span>
+          ${badge('pass', m.passed + ' pass')}
+          ${m.failed > 0 ? badge('fail', m.failed + ' fail') : ''}
+          ${badge(rc, m.compliance_rate)}
         </div>
-        <span class="chevron" id="chev-${idx}">&#9654;</span>
+        <span class="chevron" id="chev-sc-${idx}">&#9654;</span>
       </div>
-      <div class="sc-body" id="body-${idx}">
+      <div class="sc-body" id="body-sc-${idx}">
         <table>
           <thead><tr>
             <th>Control</th><th>Provider</th><th>Status</th>
@@ -198,27 +248,90 @@ function buildScenarioCard(data, idx) {
     </div>`;
 }
 
-const SCENARIO_LABELS = {
-  'sc-01': 'SC-01 — Fully compliant baseline',
-  'sc-02': 'SC-02 — Over-privileged IAM (AWS) / MFA disabled (Azure)',
-  'sc-03': 'SC-03 — Encryption disabled (AWS) / Weak TLS (Azure) / Public bucket (GCP)',
-  'sc-04': 'SC-04 — Logging disabled across all providers',
-  'sc-05': 'SC-05 — Open SSH (AWS) / Permissive firewall (GCP)',
-  'sc-06': 'SC-06 — Dormant accounts (AWS, GCP) / Insufficient log retention (AWS, Azure)',
-};
+function buildHistoryCard(entry, idx) {
+  const s   = entry.summary;
+  const rc  = rateClass(s.compliance_rate);
+  const ts  = new Date(entry.timestamp).toLocaleString();
 
-async function init() {
-  await loadMeta();
+  const scRows = (entry.scenarios || []).map((sc, si) => {
+    const sm  = sc.report_metadata;
+    const src = rateClass(sm.compliance_rate);
+    const scId = SC_IDS[si] || `sc-0${si+1}`;
+    return `
+      <div class="hist-sc-row">
+        <span class="hist-sc-label">${SC_LABELS[scId] || scId.toUpperCase()}</span>
+        <div class="hist-sc-badges">
+          ${badge('pass', sm.passed + ' pass')}
+          ${sm.failed > 0 ? badge('fail', sm.failed + ' fail') : ''}
+          ${badge(src, sm.compliance_rate)}
+        </div>
+      </div>`;
+  }).join('');
 
+  return `
+    <div class="hist-card">
+      <div class="hist-header" onclick="toggleCard('hist-${idx}')">
+        <div class="hist-meta">
+          <div class="hist-title">Run #${entry.run_number} &nbsp;·&nbsp; ${entry.scenario}</div>
+          <div class="hist-sub">${ts} &nbsp;·&nbsp; by ${entry.triggered_by} &nbsp;·&nbsp;
+            <a href="${entry.run_url}" target="_blank" rel="noopener">view log →</a>
+          </div>
+        </div>
+        <div class="sc-badges" style="margin-right:8px">
+          ${badge('pass', s.passed + ' pass')}
+          ${s.failed > 0 ? badge('fail', s.failed + ' fail') : ''}
+          ${badge(rc, s.compliance_rate)}
+        </div>
+        <span class="chevron" id="chev-hist-${idx}">&#9654;</span>
+      </div>
+      <div class="hist-body" id="body-hist-${idx}">
+        <div class="hist-scenarios">${scRows || '<div style="color:#8b949e;font-size:12px;padding:8px">No scenario detail available for this run.</div>'}</div>
+      </div>
+    </div>`;
+}
+
+function toggleCard(id) {
+  document.getElementById('body-' + id).classList.toggle('open');
+  document.getElementById('chev-' + id).classList.toggle('open');
+}
+
+async function loadHistory() {
+  try {
+    const index = await fetchJSON(BASE + 'history/index.json');
+    document.getElementById('history-tab-label').textContent =
+      `Run history (${index.length})`;
+
+    if (index.length === 0) {
+      document.getElementById('history-grid').innerHTML =
+        '<div class="empty-history">No history yet. Run a simulation to start building history.</div>';
+      return;
+    }
+
+    // load full detail for each run
+    const cards = await Promise.all(index.map(async (entry, i) => {
+      try {
+        const full = await fetchJSON(BASE + 'history/' + entry.file);
+        return buildHistoryCard(full, i);
+      } catch(_) {
+        return buildHistoryCard(entry, i);
+      }
+    }));
+
+    document.getElementById('history-grid').innerHTML = cards.join('');
+  } catch(_) {
+    document.getElementById('history-grid').innerHTML =
+      '<div class="empty-history">No history yet. Run a simulation to start building history.</div>';
+  }
+}
+
+async function loadLatest() {
   const results = [];
   const errors  = [];
 
-  await Promise.all(SCENARIOS.map(async (sc, i) => {
+  await Promise.all(SC_IDS.map(async (sc, i) => {
     try {
-      const data = await fetchJSON(BASE + sc + '.json');
-      data.scenario_label = SCENARIO_LABELS[sc] || sc.toUpperCase();
-      results[i] = data;
-    } catch(e) {
+      results[i] = await fetchJSON(BASE + sc + '.json');
+    } catch(_) {
       errors.push(sc);
       results[i] = null;
     }
@@ -228,24 +341,21 @@ async function init() {
 
   if (valid.length === 0) {
     document.getElementById('scenarios').innerHTML =
-      '<div class="loading">No results found. Run a simulation using the button above to generate results.</div>';
-    showError('No result files found in results/. Trigger the workflow to generate them.');
+      '<div class="loading">No results found. Run a simulation using the button above.</div>';
+    document.getElementById('error-area').innerHTML =
+      '<div class="error-msg">⚠ No result files found. Trigger the workflow to generate them.</div>';
     return;
   }
 
-  if (errors.length > 0) {
-    showError(`Could not load results for: ${errors.join(', ')} — run the simulation to generate them.`);
-  }
-
   buildMetaBar(valid);
-
   document.getElementById('scenarios').innerHTML =
-    valid.map((d, i) => buildScenarioCard(d, i)).join('');
+    valid.map((d, i) => buildScenarioCard(d, SC_IDS[i], i)).join('');
 }
 
-function toggle(i) {
-  document.getElementById('body-'+i).classList.toggle('open');
-  document.getElementById('chev-'+i).classList.toggle('open');
+async function init() {
+  await loadMeta();
+  await loadLatest();
+  await loadHistory();
 }
 
 init();

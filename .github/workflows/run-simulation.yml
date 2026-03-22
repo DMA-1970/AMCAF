@@ -56,23 +56,82 @@ jobs:
             --scenario ${{ github.event.inputs.scenario }} \
             --format json
 
-      - name: Write run metadata
+      - name: Write run metadata and history
         run: |
           python - <<'EOF'
-          import json, os
+          import json, os, glob
           from datetime import datetime
 
+          ts         = datetime.utcnow().isoformat() + "Z"
+          run_number = ${{ github.run_number }}
+          scenario   = "${{ github.event.inputs.scenario }}"
+          actor      = "${{ github.actor }}"
+          run_url    = "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+          os.makedirs("results/history", exist_ok=True)
+
+          # write / update meta.json
           meta = {
-            "last_run": datetime.utcnow().isoformat() + "Z",
-            "triggered_by": "${{ github.actor }}",
-            "scenario": "${{ github.event.inputs.scenario }}",
-            "run_number": ${{ github.run_number }},
-            "run_url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            "last_run": ts,
+            "triggered_by": actor,
+            "scenario": scenario,
+            "run_number": run_number,
+            "run_url": run_url
           }
-          os.makedirs("results", exist_ok=True)
           with open("results/meta.json", "w") as f:
             json.dump(meta, f, indent=2)
-          print("Metadata written to results/meta.json")
+
+          # build a history snapshot from the current result files
+          snapshot_findings = []
+          for sc in ["sc-01","sc-02","sc-03","sc-04","sc-05","sc-06"]:
+            path = f"results/{sc}.json"
+            if os.path.exists(path):
+              with open(path) as f:
+                snapshot_findings.append(json.load(f))
+
+          total  = sum(d["report_metadata"]["total_checks"] for d in snapshot_findings)
+          passed = sum(d["report_metadata"]["passed"]       for d in snapshot_findings)
+          failed = sum(d["report_metadata"]["failed"]       for d in snapshot_findings)
+          rate   = f"{round((passed/total)*100,1)}%" if total else "0%"
+
+          history_entry = {
+            "run_number":   run_number,
+            "timestamp":    ts,
+            "triggered_by": actor,
+            "scenario":     scenario,
+            "run_url":      run_url,
+            "summary": {
+              "total_checks":    total,
+              "passed":          passed,
+              "failed":          failed,
+              "compliance_rate": rate
+            },
+            "scenarios": snapshot_findings
+          }
+
+          ts_safe = ts.replace(":", "").replace(".", "")
+          hist_path = f"results/history/run-{run_number:04d}-{ts_safe}.json"
+          with open(hist_path, "w") as f:
+            json.dump(history_entry, f, indent=2)
+          print(f"History entry written to {hist_path}")
+
+          # update the history index file
+          entries = []
+          for p in sorted(glob.glob("results/history/run-*.json"), reverse=True):
+            with open(p) as f:
+              d = json.load(f)
+            entries.append({
+              "run_number":    d["run_number"],
+              "timestamp":     d["timestamp"],
+              "triggered_by":  d["triggered_by"],
+              "scenario":      d["scenario"],
+              "run_url":       d["run_url"],
+              "file":          os.path.basename(p),
+              "summary":       d["summary"]
+            })
+          with open("results/history/index.json", "w") as f:
+            json.dump(entries, f, indent=2)
+          print(f"History index updated — {len(entries)} runs recorded")
           EOF
 
       - name: Commit results to repository
