@@ -1,16 +1,18 @@
 """
 AMCAF — Automated Multi-Cloud Compliance Assurance Framework
 ============================================================
-Rule-based compliance validation engine for AWS, Azure and GCP.
-Implements all 15 control rules across IAM, encryption, logging,
-network and operational resilience domains.
-Evaluated against 8 synthetic configuration scenarios (SC-01 to SC-08).
+Rule-based compliance validation engine for AWS, Azure, GCP and
+organisational governance controls.
+
+20 controls across 8 domains and 10 regulatory frameworks:
+DORA, FCA PS21/3, UK GDPR, ISO/IEC 27001, NIST CSF,
+CSSF 22/806, NDPR, MAS TRM, PCI DSS v4.0, SOC 2 Type II
 
 Usage:
     python amcaf.py                          # run all scenarios
     python amcaf.py --scenario SC-02         # run single scenario
     python amcaf.py --scenario CUSTOM        # run custom scenario
-    python amcaf.py --all --format json      # run all, output JSON to results/
+    python amcaf.py --all --format json      # output JSON to results/
 """
 
 import argparse
@@ -21,84 +23,169 @@ from datetime import datetime
 from typing import Any
 
 # ─────────────────────────────────────────────
-# CONTROL LIBRARY
+# CONTROL LIBRARY — 20 controls, 10 frameworks
 # ─────────────────────────────────────────────
 
 CONTROL_LIBRARY = {
     "IAM-01": {
         "domain": "Identity & Access Management",
         "objective": "Privileged access restricted; least-privilege enforced",
-        "regulatory_refs": ["NIST CSF PR.AC-4", "ISO 27001 A.9.2", "DORA Art. 9"],
+        "regulatory_refs": [
+            "NIST CSF PR.AC-4", "ISO 27001 A.9.2", "DORA Art. 9",
+            "CSSF 22/806 §3.2", "MAS TRM 6.1", "PCI DSS v4.0 Req 7", "SOC 2 CC6.3",
+        ],
     },
     "IAM-02": {
         "domain": "Identity & Access Management",
         "objective": "MFA enforced for all administrative access",
-        "regulatory_refs": ["FCA PS21/3", "NIST CSF PR.AC-7", "ISO 27001 A.9.4"],
+        "regulatory_refs": [
+            "FCA PS21/3", "NIST CSF PR.AC-7", "ISO 27001 A.9.4",
+            "CSSF 22/806 §3.3", "MAS TRM 6.2", "PCI DSS v4.0 Req 8", "SOC 2 CC6.1",
+        ],
     },
     "IAM-03": {
         "domain": "Identity & Access Management",
         "objective": "Periodic access review enforced; dormant accounts disabled",
-        "regulatory_refs": ["DORA Art. 9", "FCA PS21/3", "ISO 27001 A.9.2.5", "NIST CSF PR.AC-1"],
+        "regulatory_refs": [
+            "DORA Art. 9", "FCA PS21/3", "ISO 27001 A.9.2.5",
+            "NIST CSF PR.AC-1", "MAS TRM 6.3", "PCI DSS v4.0 Req 8.6", "SOC 2 CC6.2",
+        ],
+    },
+    "IAM-04": {
+        "domain": "Identity & Access Management",
+        "objective": "Privileged access workstations enforced; standing privilege eliminated",
+        "regulatory_refs": [
+            "CSSF 22/806 §3.4", "MAS TRM 6.4", "ISO 27001 A.9.2.3",
+            "NIST CSF PR.AC-4", "PCI DSS v4.0 Req 7.2",
+        ],
     },
     "ENC-01": {
         "domain": "Data Protection & Encryption",
         "objective": "Data at rest encrypted by default for all storage resources",
-        "regulatory_refs": ["UK GDPR Art. 32", "ISO 27001 A.10.1", "NIST CSF PR.DS-1"],
+        "regulatory_refs": [
+            "UK GDPR Art. 32", "ISO 27001 A.10.1", "NIST CSF PR.DS-1",
+            "NDPR Art. 2.1(c)", "MAS TRM 9.1", "PCI DSS v4.0 Req 3", "SOC 2 CC6.7",
+        ],
     },
     "ENC-02": {
         "domain": "Data Protection & Encryption",
         "objective": "Data in transit protected; unencrypted protocols disabled",
-        "regulatory_refs": ["UK GDPR Art. 32", "ISO 27001 A.10.1", "NIST CSF PR.DS-2"],
+        "regulatory_refs": [
+            "UK GDPR Art. 32", "ISO 27001 A.10.1", "NIST CSF PR.DS-2",
+            "NDPR Art. 2.1(c)", "MAS TRM 9.2", "PCI DSS v4.0 Req 4", "SOC 2 CC6.7",
+        ],
     },
     "ENC-03": {
         "domain": "Data Protection & Encryption",
         "objective": "Customer-managed key rotation enforced across all key management services",
-        "regulatory_refs": ["UK GDPR Art. 32", "ISO 27001 A.10.1", "NIST CSF PR.DS-1"],
+        "regulatory_refs": [
+            "UK GDPR Art. 32", "ISO 27001 A.10.1", "NIST CSF PR.DS-1",
+            "MAS TRM 9.3", "PCI DSS v4.0 Req 3.7", "SOC 2 CC6.7",
+        ],
+    },
+    "DAT-01": {
+        "domain": "Data Governance",
+        "objective": "Data classification enforced; regulated data inventoried and tagged",
+        "regulatory_refs": [
+            "NDPR Art. 2.1(a)", "UK GDPR Art. 5", "ISO 27001 A.8.2",
+            "NIST CSF ID.AM-5", "MAS TRM 4.1", "SOC 2 CC6.5",
+        ],
+    },
+    "DAT-02": {
+        "domain": "Data Governance",
+        "objective": "Data subject rights management; breach notification within required period",
+        "regulatory_refs": [
+            "NDPR Art. 4.1", "UK GDPR Art. 33", "ISO 27001 A.16.1.2",
+            "NIST CSF RS.CO-2", "DORA Art. 19",
+        ],
     },
     "LOG-01": {
         "domain": "Logging & Monitoring",
         "objective": "Management plane audit logging enabled in all regions",
-        "regulatory_refs": ["DORA Art. 10", "FCA PS21/3", "ISO 27001 A.12.4"],
+        "regulatory_refs": [
+            "DORA Art. 10", "FCA PS21/3", "ISO 27001 A.12.4",
+            "CSSF 22/806 §5.1", "MAS TRM 11.1", "PCI DSS v4.0 Req 10", "SOC 2 CC7.2",
+        ],
     },
     "LOG-02": {
         "domain": "Logging & Monitoring",
         "objective": "Audit log retention meets minimum period; tamper protection enabled",
-        "regulatory_refs": ["DORA Art. 10", "FCA PS21/3", "ISO 27001 A.12.4.1", "UK GDPR Art. 5(2)"],
+        "regulatory_refs": [
+            "DORA Art. 10", "FCA PS21/3", "ISO 27001 A.12.4.1", "UK GDPR Art. 5(2)",
+            "CSSF 22/806 §5.2", "MAS TRM 11.2", "PCI DSS v4.0 Req 10.7", "SOC 2 CC7.2",
+        ],
     },
     "LOG-03": {
         "domain": "Logging & Monitoring",
         "objective": "Real-time alerting configured for security events and anomalies",
-        "regulatory_refs": ["DORA Art. 10", "FCA PS21/3", "ISO 27001 A.12.4", "NIST CSF DE.AE-1"],
+        "regulatory_refs": [
+            "DORA Art. 10", "FCA PS21/3", "ISO 27001 A.12.4", "NIST CSF DE.AE-1",
+            "CSSF 22/806 §5.3", "MAS TRM 11.3", "PCI DSS v4.0 Req 10.6", "SOC 2 CC7.3",
+        ],
+    },
+    "INC-01": {
+        "domain": "Incident Management",
+        "objective": "ICT incidents classified, escalated and notified to regulators within required timeframes",
+        "regulatory_refs": [
+            "DORA Art. 19", "CSSF 22/806 §7.1", "FCA PS21/3",
+            "ISO 27001 A.16.1", "NIST CSF RS.CO-3", "MAS TRM 13.1",
+        ],
     },
     "NET-01": {
         "domain": "Network Security",
         "objective": "Default-deny network access; no unrestricted inbound rules",
-        "regulatory_refs": ["NIST CSF PR.AC-5", "ISO 27001 A.13.1", "DORA Art. 9"],
+        "regulatory_refs": [
+            "NIST CSF PR.AC-5", "ISO 27001 A.13.1", "DORA Art. 9",
+            "CSSF 22/806 §4.1", "MAS TRM 7.1", "PCI DSS v4.0 Req 1", "SOC 2 CC6.6",
+        ],
     },
     "NET-02": {
         "domain": "Network Security",
         "objective": "Network segmentation enforced by workload sensitivity classification",
-        "regulatory_refs": ["NIST CSF PR.AC-5", "ISO 27001 A.13.1", "DORA Art. 9"],
+        "regulatory_refs": [
+            "NIST CSF PR.AC-5", "ISO 27001 A.13.1", "DORA Art. 9",
+            "MAS TRM 7.2", "PCI DSS v4.0 Req 1.3", "SOC 2 CC6.6",
+        ],
     },
     "NET-03": {
         "domain": "Network Security",
         "objective": "Public management interfaces restricted to authorised sources",
-        "regulatory_refs": ["FCA PS21/3", "NIST CSF PR.AC-5", "ISO 27001 A.9.1.2"],
+        "regulatory_refs": [
+            "FCA PS21/3", "NIST CSF PR.AC-5", "ISO 27001 A.9.1.2",
+            "MAS TRM 7.3", "PCI DSS v4.0 Req 2.2", "SOC 2 CC6.6",
+        ],
+    },
+    "TPM-01": {
+        "domain": "Third-Party Management",
+        "objective": "Critical ICT third-party providers identified, assessed and contractually governed",
+        "regulatory_refs": [
+            "DORA Art. 28", "CSSF 22/806 §8.1", "FCA PS21/3",
+            "ISO 27001 A.15.1", "NIST CSF ID.SC-2", "MAS TRM 14.1",
+        ],
     },
     "RES-01": {
         "domain": "Operational Resilience",
         "objective": "Automated backups configured with defined retention and RPO",
-        "regulatory_refs": ["DORA Art. 12", "FCA PS21/3", "ISO 27001 A.17.1", "NIST CSF PR.IP-4"],
+        "regulatory_refs": [
+            "DORA Art. 12", "FCA PS21/3", "ISO 27001 A.17.1", "NIST CSF PR.IP-4",
+            "CSSF 22/806 §6.1", "MAS TRM 12.1", "PCI DSS v4.0 Req 12.3", "SOC 2 A1.2",
+        ],
     },
     "RES-02": {
         "domain": "Operational Resilience",
         "objective": "Infrastructure-as-code enforced; configuration drift continuously detected",
-        "regulatory_refs": ["DORA Art. 9", "FCA PS21/3", "ISO 27001 A.12.1", "NIST CSF PR.IP-1"],
+        "regulatory_refs": [
+            "DORA Art. 9", "FCA PS21/3", "ISO 27001 A.12.1", "NIST CSF PR.IP-1",
+            "CSSF 22/806 §6.2", "MAS TRM 12.2", "SOC 2 CC8.1",
+        ],
     },
     "RES-03": {
         "domain": "Operational Resilience",
         "objective": "Centralised security findings aggregation and remediation tracking enabled",
-        "regulatory_refs": ["DORA Art. 10", "FCA PS21/3", "ISO 27001 A.16.1", "NIST CSF RS.AN-1"],
+        "regulatory_refs": [
+            "DORA Art. 10", "FCA PS21/3", "ISO 27001 A.16.1", "NIST CSF RS.AN-1",
+            "CSSF 22/806 §5.4", "MAS TRM 11.4", "SOC 2 CC7.4",
+        ],
     },
 }
 
@@ -112,6 +199,8 @@ AZURE_MIN_LOG_RETENTION = 90
 MIN_BACKUP_RETENTION    = 30
 MIN_VPCS                = 2
 MANAGEMENT_PORTS        = {22, 3389}
+MAX_BREACH_NOTIFY_HOURS = 72
+MAX_INCIDENT_NOTIFY_HOURS = 4
 
 # ─────────────────────────────────────────────
 # VALIDATION ENGINE — AWS
@@ -130,7 +219,7 @@ def validate_aws(config: dict[str, Any]) -> list[dict]:
     aws_config = config.get("aws_config", {})
     sec_hub    = config.get("security_hub", {})
 
-    # IAM-01: no wildcard actions in IAM policies
+    # IAM-01: no wildcard actions
     has_wildcard = any("*" in p.get("actions", []) for p in iam.get("policies", []))
     results.append({
         "control_id": "IAM-01", "provider": "AWS",
@@ -140,7 +229,7 @@ def validate_aws(config: dict[str, Any]) -> list[dict]:
         "config_attribute": "iam.policies[].actions",
     })
 
-    # IAM-02: MFA enabled for all IAM users
+    # IAM-02: MFA for all users
     mfa_disabled = [u["username"] for u in iam.get("users", [])
                     if not u.get("mfa_enabled", False)]
     results.append({
@@ -174,21 +263,20 @@ def validate_aws(config: dict[str, Any]) -> list[dict]:
         "config_attribute": "s3.buckets[].default_encryption_enabled",
     })
 
-    # ENC-02 — not evaluated on AWS in this mapping (Azure handles TLS)
-
     # ENC-03: KMS key rotation
-    rotation_disabled = [k["key_id"] for k in kms.get("keys", [])
-                         if not k.get("rotation_enabled", False)]
+    rot_disabled = [k["key_id"] for k in kms.get("keys", [])
+                    if not k.get("rotation_enabled", False)]
     results.append({
         "control_id": "ENC-03", "provider": "AWS",
-        "status": "FAIL" if rotation_disabled else "PASS",
-        "detail": (f"Key rotation disabled for KMS keys: {rotation_disabled}" if rotation_disabled
+        "status": "FAIL" if rot_disabled else "PASS",
+        "detail": (f"Key rotation disabled for KMS keys: {rot_disabled}" if rot_disabled
                    else "Key rotation enabled for all customer-managed KMS keys"),
         "config_attribute": "kms.keys[].rotation_enabled",
     })
 
-    # LOG-01: CloudTrail active on all trails
-    inactive = [t["name"] for t in ct.get("trails", []) if not t.get("is_logging", False)]
+    # LOG-01: CloudTrail active
+    inactive = [t["name"] for t in ct.get("trails", [])
+                if not t.get("is_logging", False)]
     results.append({
         "control_id": "LOG-01", "provider": "AWS",
         "status": "FAIL" if inactive else "PASS",
@@ -197,7 +285,7 @@ def validate_aws(config: dict[str, Any]) -> list[dict]:
         "config_attribute": "cloudtrail.trails[].is_logging",
     })
 
-    # LOG-02: log file validation + S3 Object Lock + retention
+    # LOG-02: log file validation + Object Lock + retention
     log02 = []
     if not ct.get("log_file_validation_enabled", False):
         log02.append("log file validation not enabled")
@@ -214,7 +302,7 @@ def validate_aws(config: dict[str, Any]) -> list[dict]:
         "config_attribute": "cloudtrail.log_file_validation_enabled | cloudtrail.s3_object_lock_enabled | cloudtrail.retention_days",
     })
 
-    # LOG-03: CloudWatch alarms + Security Hub
+    # LOG-03: CloudWatch + Security Hub
     log03 = []
     if not monitoring.get("cloudwatch_alarms_enabled", False):
         log03.append("CloudWatch metric alarms not configured")
@@ -228,7 +316,7 @@ def validate_aws(config: dict[str, Any]) -> list[dict]:
         "config_attribute": "monitoring.cloudwatch_alarms_enabled | monitoring.security_hub_enabled",
     })
 
-    # NET-01 + NET-03: no security group permits 0.0.0.0/0 inbound
+    # NET-01 + NET-03: no 0.0.0.0/0 inbound
     open_sgs, open_mgmt = [], []
     for sg in ec2.get("security_groups", []):
         for rule in sg.get("inbound_rules", []):
@@ -256,13 +344,13 @@ def validate_aws(config: dict[str, Any]) -> list[dict]:
     results.append({
         "control_id": "NET-02", "provider": "AWS",
         "status": "FAIL" if vpc_count < MIN_VPCS else "PASS",
-        "detail": (f"Only {vpc_count} VPC(s) found; minimum {MIN_VPCS} required for workload segmentation"
+        "detail": (f"Only {vpc_count} VPC(s) found; minimum {MIN_VPCS} required"
                    if vpc_count < MIN_VPCS
                    else f"{vpc_count} VPCs present; workload segmentation requirements met"),
         "config_attribute": "vpc.vpcs[]",
     })
 
-    # RES-01: AWS Backup plan
+    # RES-01: AWS Backup
     res01 = []
     if not backup.get("backup_plan_enabled", False):
         res01.append("no AWS Backup plan configured")
@@ -318,7 +406,7 @@ def validate_azure(config: dict[str, Any]) -> list[dict]:
     backup    = config.get("backup", {})
     policy    = config.get("azure_policy", {})
 
-    # IAM-02: MFA via Conditional Access
+    # IAM-02: Conditional Access MFA
     mfa = ca.get("mfa_policy_enabled", False)
     results.append({
         "control_id": "IAM-02", "provider": "Azure",
@@ -350,7 +438,7 @@ def validate_azure(config: dict[str, Any]) -> list[dict]:
         "config_attribute": "key_vault.keys[].rotation_policy_enabled",
     })
 
-    # LOG-01: Activity Log diagnostic settings
+    # LOG-01: Activity Log
     activity = diag.get("activity_log_enabled", False)
     results.append({
         "control_id": "LOG-01", "provider": "Azure",
@@ -394,7 +482,7 @@ def validate_azure(config: dict[str, Any]) -> list[dict]:
     results.append({
         "control_id": "NET-02", "provider": "Azure",
         "status": "FAIL" if vnet_count < MIN_VPCS else "PASS",
-        "detail": (f"Only {vnet_count} VNet(s) found; minimum {MIN_VPCS} required for workload segmentation"
+        "detail": (f"Only {vnet_count} VNet(s) found; minimum {MIN_VPCS} required"
                    if vnet_count < MIN_VPCS
                    else f"{vnet_count} VNets present; workload segmentation requirements met"),
         "config_attribute": "network.vnets[]",
@@ -461,7 +549,7 @@ def validate_gcp(config: dict[str, Any]) -> list[dict]:
     backup     = config.get("backup", {})
     org_policy = config.get("org_policy", {})
 
-    # NET-01: no GCS buckets with public access
+    # NET-01: no public GCS buckets
     public_buckets = [b["name"] for b in gcs.get("buckets", [])
                       if b.get("public_access_prevention") != "enforced"
                       and not b.get("uniform_bucket_level_access", False)]
@@ -483,7 +571,7 @@ def validate_gcp(config: dict[str, Any]) -> list[dict]:
         "config_attribute": "audit_logs.admin_activity_enabled",
     })
 
-    # IAM-03: dormant service account detection
+    # IAM-03: dormant service accounts
     dormant_sa = [sa["name"] for sa in iam.get("service_accounts", [])
                   if sa.get("last_used_days") is None
                   or sa.get("last_used_days", 0) > DORMANCY_THRESHOLD_DAYS]
@@ -495,7 +583,7 @@ def validate_gcp(config: dict[str, Any]) -> list[dict]:
         "config_attribute": "iam.service_accounts[].last_used_days",
     })
 
-    # NET-03: no VPC firewall rules permitting all inbound
+    # NET-03: no permissive firewall rules
     open_rules = [r["name"] for r in vpc.get("firewall_rules", [])
                   if r.get("source_ranges") == ["0.0.0.0/0"]
                   and r.get("action") == "allow"
@@ -519,7 +607,7 @@ def validate_gcp(config: dict[str, Any]) -> list[dict]:
         "config_attribute": "cloud_kms.keys[].rotation_schedule_enabled",
     })
 
-    # LOG-03: Security Command Center findings + alerting
+    # LOG-03: SCC findings + alerting
     log03 = []
     if not scc.get("findings_enabled", False):
         log03.append("Security Command Center findings not enabled")
@@ -538,13 +626,13 @@ def validate_gcp(config: dict[str, Any]) -> list[dict]:
     results.append({
         "control_id": "NET-02", "provider": "GCP",
         "status": "FAIL" if net_count < MIN_VPCS else "PASS",
-        "detail": (f"Only {net_count} VPC network(s) found; minimum {MIN_VPCS} required for workload segmentation"
+        "detail": (f"Only {net_count} VPC network(s) found; minimum {MIN_VPCS} required"
                    if net_count < MIN_VPCS
                    else f"{net_count} VPC networks present; workload segmentation requirements met"),
         "config_attribute": "vpc_networks.networks[]",
     })
 
-    # RES-01: Cloud SQL automated backups
+    # RES-01: Cloud SQL backups
     res01 = []
     if not backup.get("automated_backups_enabled", False):
         res01.append("Cloud SQL automated backups not enabled")
@@ -572,7 +660,7 @@ def validate_gcp(config: dict[str, Any]) -> list[dict]:
         "config_attribute": "org_policy.constraints_enabled | org_policy.security_health_analytics_enabled",
     })
 
-    # RES-03: Security Command Center Premium
+    # RES-03: SCC Premium + Cloud Asset Inventory
     res03 = []
     if not scc.get("premium_enabled", False):
         res03.append("Security Command Center Premium not enabled")
@@ -584,6 +672,115 @@ def validate_gcp(config: dict[str, Any]) -> list[dict]:
         "detail": (f"Centralised findings gaps: {'; '.join(res03)}" if res03
                    else "Security Command Center Premium active; Cloud Asset Inventory configured"),
         "config_attribute": "security_command_center.premium_enabled | security_command_center.asset_inventory_enabled",
+    })
+
+    return results
+
+
+# ─────────────────────────────────────────────
+# VALIDATION ENGINE — ORGANISATIONAL
+# Controls evaluated at organisation level,
+# not within a specific cloud provider.
+# ─────────────────────────────────────────────
+
+def validate_organisational(config: dict) -> list[dict]:
+    results = []
+    org = config.get("org", {})
+
+    # IAM-04: privileged access workstations + JIT
+    iam4 = org.get("privileged_access", {})
+    iam4_failures = []
+    if not iam4.get("paw_enforced", False):
+        iam4_failures.append("privileged access workstations (PAW) not enforced")
+    if not iam4.get("just_in_time_access", False):
+        iam4_failures.append("just-in-time access not configured; standing privilege present")
+    if not iam4.get("session_recording_enabled", False):
+        iam4_failures.append("privileged session recording not enabled")
+    results.append({
+        "control_id": "IAM-04", "provider": "ORG",
+        "status": "FAIL" if iam4_failures else "PASS",
+        "detail": (f"Privileged access governance gaps: {'; '.join(iam4_failures)}"
+                   if iam4_failures else
+                   "PAW enforced; JIT access configured; session recording active"),
+        "config_attribute": "org.privileged_access.paw_enforced | org.privileged_access.just_in_time_access | org.privileged_access.session_recording_enabled",
+    })
+
+    # DAT-01: data classification and inventory
+    dat1 = org.get("data_governance", {})
+    dat1_failures = []
+    if not dat1.get("classification_policy_enabled", False):
+        dat1_failures.append("no data classification policy defined")
+    if not dat1.get("regulated_data_inventory", False):
+        dat1_failures.append("regulated data inventory not maintained")
+    if not dat1.get("tagging_enforced", False):
+        dat1_failures.append("data tagging not enforced on storage resources")
+    results.append({
+        "control_id": "DAT-01", "provider": "ORG",
+        "status": "FAIL" if dat1_failures else "PASS",
+        "detail": (f"Data classification failures: {'; '.join(dat1_failures)}"
+                   if dat1_failures else
+                   "Data classification policy active; regulated data inventoried and tagged"),
+        "config_attribute": "org.data_governance.classification_policy_enabled | org.data_governance.regulated_data_inventory | org.data_governance.tagging_enforced",
+    })
+
+    # DAT-02: breach notification process
+    dat2 = org.get("breach_notification", {})
+    dat2_failures = []
+    if not dat2.get("notification_process_defined", False):
+        dat2_failures.append("no breach notification process defined")
+    notif_hours = dat2.get("notification_sla_hours", 999)
+    if notif_hours > MAX_BREACH_NOTIFY_HOURS:
+        dat2_failures.append(f"notification SLA {notif_hours}h exceeds {MAX_BREACH_NOTIFY_HOURS}-hour regulatory maximum")
+    if not dat2.get("regulator_contacts_maintained", False):
+        dat2_failures.append("regulatory notification contacts not maintained")
+    results.append({
+        "control_id": "DAT-02", "provider": "ORG",
+        "status": "FAIL" if dat2_failures else "PASS",
+        "detail": (f"Breach notification failures: {'; '.join(dat2_failures)}"
+                   if dat2_failures else
+                   "Breach notification process defined; SLA <= 72 hours; regulator contacts maintained"),
+        "config_attribute": "org.breach_notification.notification_process_defined | org.breach_notification.notification_sla_hours | org.breach_notification.regulator_contacts_maintained",
+    })
+
+    # INC-01: ICT incident classification + regulatory notification
+    inc1 = org.get("incident_management", {})
+    inc1_failures = []
+    if not inc1.get("classification_framework_defined", False):
+        inc1_failures.append("no ICT incident classification framework defined")
+    if not inc1.get("escalation_process_defined", False):
+        inc1_failures.append("incident escalation process not defined")
+    if not inc1.get("regulatory_notification_enabled", False):
+        inc1_failures.append("regulatory notification process not configured")
+    major_hours = inc1.get("major_incident_notification_hours", 999)
+    if major_hours > MAX_INCIDENT_NOTIFY_HOURS:
+        inc1_failures.append(f"major incident notification SLA {major_hours}h exceeds {MAX_INCIDENT_NOTIFY_HOURS}-hour DORA requirement")
+    results.append({
+        "control_id": "INC-01", "provider": "ORG",
+        "status": "FAIL" if inc1_failures else "PASS",
+        "detail": (f"Incident management failures: {'; '.join(inc1_failures)}"
+                   if inc1_failures else
+                   "Incident classification, escalation and regulatory notification configured; major incident SLA <= 4 hours"),
+        "config_attribute": "org.incident_management.classification_framework_defined | org.incident_management.escalation_process_defined | org.incident_management.regulatory_notification_enabled | org.incident_management.major_incident_notification_hours",
+    })
+
+    # TPM-01: third-party provider risk management
+    tpm1 = org.get("third_party_management", {})
+    tpm1_failures = []
+    if not tpm1.get("critical_provider_register", False):
+        tpm1_failures.append("no critical ICT provider register maintained")
+    if not tpm1.get("risk_assessments_conducted", False):
+        tpm1_failures.append("third-party risk assessments not conducted")
+    if not tpm1.get("contractual_audit_rights", False):
+        tpm1_failures.append("audit rights not contractually secured with critical providers")
+    if not tpm1.get("exit_strategy_defined", False):
+        tpm1_failures.append("exit strategy not defined for critical providers")
+    results.append({
+        "control_id": "TPM-01", "provider": "ORG",
+        "status": "FAIL" if tpm1_failures else "PASS",
+        "detail": (f"Third-party management failures: {'; '.join(tpm1_failures)}"
+                   if tpm1_failures else
+                   "Critical provider register maintained; risk assessments conducted; audit rights and exit strategy secured"),
+        "config_attribute": "org.third_party_management.critical_provider_register | org.third_party_management.risk_assessments_conducted | org.third_party_management.contractual_audit_rights | org.third_party_management.exit_strategy_defined",
     })
 
     return results
@@ -627,7 +824,13 @@ def generate_report(all_results: list[dict]) -> dict:
 # SCENARIO RUNNER
 # ─────────────────────────────────────────────
 
-def run_scenario(scenario_id: str, aws_cfg: dict, azure_cfg: dict, gcp_cfg: dict) -> dict:
+def run_scenario(
+    scenario_id: str,
+    aws_cfg: dict,
+    azure_cfg: dict,
+    gcp_cfg: dict,
+    org_cfg: dict = None,
+) -> dict:
     print(f"\n{'='*60}")
     print(f"  Scenario: {scenario_id}")
     print(f"{'='*60}")
@@ -635,6 +838,7 @@ def run_scenario(scenario_id: str, aws_cfg: dict, azure_cfg: dict, gcp_cfg: dict
         validate_aws(aws_cfg)
         + validate_azure(azure_cfg)
         + validate_gcp(gcp_cfg)
+        + validate_organisational(org_cfg or {})
     )
     report = generate_report(all_results)
     meta   = report["report_metadata"]
@@ -666,7 +870,7 @@ def load_scenario_from_file(sc_id: str) -> tuple | None:
         with open(path) as f:
             data = json.load(f)
         label = f"{data['scenario_id']}: {data['description']}"
-        return label, data["aws"], data["azure"], data["gcp"]
+        return label, data["aws"], data["azure"], data["gcp"], data.get("org", {})
     except (FileNotFoundError, KeyError):
         return None
 
@@ -679,84 +883,156 @@ def load_custom_scenario() -> tuple | None:
         with open(path) as f:
             data = json.load(f)
         label = f"SC-CUSTOM: {data.get('description', 'Custom scenario')}"
-        return label, data["aws"], data["azure"], data["gcp"]
+        return label, data["aws"], data["azure"], data["gcp"], data.get("org", {})
     except (FileNotFoundError, KeyError):
         return None
 
 
 # ─────────────────────────────────────────────
-# SCENARIO DATA — SC-01 through SC-08
+# ORG CONFIG TEMPLATES
 # ─────────────────────────────────────────────
 
-# Shared compliant baseline components
-_base_aws_iam = {
+org_compliant = {
+    "org": {
+        "privileged_access": {
+            "paw_enforced": True,
+            "just_in_time_access": True,
+            "session_recording_enabled": True,
+        },
+        "data_governance": {
+            "classification_policy_enabled": True,
+            "regulated_data_inventory": True,
+            "tagging_enforced": True,
+        },
+        "breach_notification": {
+            "notification_process_defined": True,
+            "notification_sla_hours": 24,
+            "regulator_contacts_maintained": True,
+        },
+        "incident_management": {
+            "classification_framework_defined": True,
+            "escalation_process_defined": True,
+            "regulatory_notification_enabled": True,
+            "major_incident_notification_hours": 4,
+        },
+        "third_party_management": {
+            "critical_provider_register": True,
+            "risk_assessments_conducted": True,
+            "contractual_audit_rights": True,
+            "exit_strategy_defined": True,
+        },
+    }
+}
+
+org_failing = {
+    "org": {
+        "privileged_access": {
+            "paw_enforced": False,
+            "just_in_time_access": False,
+            "session_recording_enabled": False,
+        },
+        "data_governance": {
+            "classification_policy_enabled": False,
+            "regulated_data_inventory": False,
+            "tagging_enforced": False,
+        },
+        "breach_notification": {
+            "notification_process_defined": False,
+            "notification_sla_hours": 120,
+            "regulator_contacts_maintained": False,
+        },
+        "incident_management": {
+            "classification_framework_defined": False,
+            "escalation_process_defined": False,
+            "regulatory_notification_enabled": False,
+            "major_incident_notification_hours": 48,
+        },
+        "third_party_management": {
+            "critical_provider_register": False,
+            "risk_assessments_conducted": False,
+            "contractual_audit_rights": False,
+            "exit_strategy_defined": False,
+        },
+    }
+}
+
+
+# ─────────────────────────────────────────────
+# SHARED BASELINE COMPONENTS
+# ─────────────────────────────────────────────
+
+_base_iam = {
     "policies": [{"name": "ReadOnlyPolicy", "actions": ["s3:GetObject"]}],
     "users": [
         {"username": "ops-user",   "mfa_enabled": True, "last_used_days": 5},
         {"username": "admin-user", "mfa_enabled": True, "last_used_days": 12},
     ],
 }
-_base_aws_ct = {
+_base_ct = {
     "trails": [{"name": "mgmt-trail", "is_logging": True}],
     "log_file_validation_enabled": True,
     "s3_object_lock_enabled": True,
     "retention_days": 365,
 }
-_base_azure_diag = {
+_base_diag = {
     "activity_log_enabled": True,
     "log_retention_days": 90,
     "immutable_storage_enabled": True,
 }
 _base_gcp_storage = {"buckets": [{"name": "gs-prod", "public_access_prevention": "enforced", "uniform_bucket_level_access": True}]}
-_base_gcp_sa = {"service_accounts": [{"name": "svc-dataflow@proj.iam", "last_used_days": 14}]}
+_base_gcp_sa      = {"service_accounts": [{"name": "svc-dataflow@proj.iam", "last_used_days": 14}]}
 
-# Extended compliant components (new controls)
 _ext_aws = {
-    "kms":        {"keys": [{"key_id": "key-prod-01", "rotation_enabled": True}]},
-    "monitoring": {"cloudwatch_alarms_enabled": True, "security_hub_enabled": True},
-    "vpc":        {"vpcs": [{"vpc_id": "vpc-prod", "name": "production"}, {"vpc_id": "vpc-staging", "name": "staging"}]},
-    "backup":     {"backup_plan_enabled": True, "retention_days": 35},
-    "aws_config": {"config_rules_enabled": True, "drift_detection_enabled": True},
+    "kms":          {"keys": [{"key_id": "key-prod-01", "rotation_enabled": True}]},
+    "monitoring":   {"cloudwatch_alarms_enabled": True, "security_hub_enabled": True},
+    "vpc":          {"vpcs": [{"vpc_id": "vpc-prod", "name": "production"}, {"vpc_id": "vpc-staging", "name": "staging"}]},
+    "backup":       {"backup_plan_enabled": True, "retention_days": 35},
+    "aws_config":   {"config_rules_enabled": True, "drift_detection_enabled": True},
     "security_hub": {"enabled": True},
 }
 _ext_azure = {
-    "key_vault":         {"keys": [{"name": "prod-key-01", "rotation_policy_enabled": True}]},
-    "defender_for_cloud":{"alerts_enabled": True, "sentinel_integration": True, "enabled": True, "secure_score_enabled": True},
-    "network":           {"vnets": [{"name": "vnet-prod"}, {"name": "vnet-dmz"}]},
-    "backup":            {"backup_vault_enabled": True, "retention_days": 35},
-    "azure_policy":      {"policy_assignments_enabled": True, "defender_posture_enabled": True},
+    "key_vault":          {"keys": [{"name": "prod-key-01", "rotation_policy_enabled": True}]},
+    "defender_for_cloud": {"alerts_enabled": True, "sentinel_integration": True, "enabled": True, "secure_score_enabled": True},
+    "network":            {"vnets": [{"name": "vnet-prod"}, {"name": "vnet-dmz"}]},
+    "backup":             {"backup_vault_enabled": True, "retention_days": 35},
+    "azure_policy":       {"policy_assignments_enabled": True, "defender_posture_enabled": True},
 }
 _ext_gcp = {
-    "cloud_kms":              {"keys": [{"name": "prod-key-01", "rotation_schedule_enabled": True}]},
-    "security_command_center":{"findings_enabled": True, "alerting_policies_enabled": True, "premium_enabled": True, "asset_inventory_enabled": True},
-    "vpc_networks":           {"networks": [{"name": "vpc-prod"}, {"name": "vpc-restricted"}]},
-    "backup":                 {"automated_backups_enabled": True, "retention_days": 35},
-    "org_policy":             {"constraints_enabled": True, "security_health_analytics_enabled": True},
+    "cloud_kms":               {"keys": [{"name": "prod-key-01", "rotation_schedule_enabled": True}]},
+    "security_command_center": {"findings_enabled": True, "alerting_policies_enabled": True, "premium_enabled": True, "asset_inventory_enabled": True},
+    "vpc_networks":            {"networks": [{"name": "vpc-prod"}, {"name": "vpc-restricted"}]},
+    "backup":                  {"automated_backups_enabled": True, "retention_days": 35},
+    "org_policy":              {"constraints_enabled": True, "security_health_analytics_enabled": True},
 }
 
-# SC-01: Fully compliant baseline (9 original controls)
-sc01_aws   = {**{"iam": _base_aws_iam, "s3": {"buckets": [{"name": "prod-data", "default_encryption_enabled": True}]}, "cloudtrail": _base_aws_ct, "ec2": {"security_groups": []}}, **_ext_aws}
-sc01_azure = {"conditional_access": {"mfa_policy_enabled": True}, "storage_accounts": [{"name": "prodstore01", "minimum_tls_version": "TLS1_2"}], "diagnostic_settings": _base_azure_diag, **_ext_azure}
+
+# ─────────────────────────────────────────────
+# SCENARIO DATA
+# ─────────────────────────────────────────────
+
+# SC-01: Fully compliant baseline
+sc01_aws   = {**{"iam": _base_iam, "s3": {"buckets": [{"name": "prod-data", "default_encryption_enabled": True}]}, "cloudtrail": _base_ct, "ec2": {"security_groups": []}}, **_ext_aws}
+sc01_azure = {"conditional_access": {"mfa_policy_enabled": True}, "storage_accounts": [{"name": "prodstore01", "minimum_tls_version": "TLS1_2"}], "diagnostic_settings": _base_diag, **_ext_azure}
 sc01_gcp   = {"cloud_storage": _base_gcp_storage, "audit_logs": {"admin_activity_enabled": True}, "iam": _base_gcp_sa, "vpc": {"firewall_rules": []}, **_ext_gcp}
 
 # SC-02: Over-privileged IAM (AWS) + MFA disabled (Azure)
-sc02_aws   = {**{"iam": {"policies": [{"name": "AdminPolicy", "actions": ["*"]}], "users": [{"username": "svc-deploy", "mfa_enabled": True, "last_used_days": 3}, {"username": "admin-user", "mfa_enabled": True, "last_used_days": 7}]}, "s3": {"buckets": [{"name": "prod-data", "default_encryption_enabled": True}]}, "cloudtrail": _base_aws_ct, "ec2": {"security_groups": []}}, **_ext_aws}
-sc02_azure = {"conditional_access": {"mfa_policy_enabled": False}, "storage_accounts": [{"name": "prodstore01", "minimum_tls_version": "TLS1_2"}], "diagnostic_settings": _base_azure_diag, **_ext_azure}
+sc02_aws   = {**{"iam": {"policies": [{"name": "AdminPolicy", "actions": ["*"]}], "users": [{"username": "svc-deploy", "mfa_enabled": True, "last_used_days": 3}, {"username": "admin-user", "mfa_enabled": True, "last_used_days": 7}]}, "s3": {"buckets": [{"name": "prod-data", "default_encryption_enabled": True}]}, "cloudtrail": _base_ct, "ec2": {"security_groups": []}}, **_ext_aws}
+sc02_azure = {"conditional_access": {"mfa_policy_enabled": False}, "storage_accounts": [{"name": "prodstore01", "minimum_tls_version": "TLS1_2"}], "diagnostic_settings": _base_diag, **_ext_azure}
 sc02_gcp   = {"cloud_storage": _base_gcp_storage, "audit_logs": {"admin_activity_enabled": True}, "iam": _base_gcp_sa, "vpc": {"firewall_rules": []}, **_ext_gcp}
 
 # SC-03: Encryption disabled (AWS) + weak TLS (Azure) + public bucket (GCP)
-sc03_aws   = {**{"iam": _base_aws_iam, "s3": {"buckets": [{"name": "prod-data", "default_encryption_enabled": False}]}, "cloudtrail": _base_aws_ct, "ec2": {"security_groups": []}}, **_ext_aws}
-sc03_azure = {"conditional_access": {"mfa_policy_enabled": True}, "storage_accounts": [{"name": "prodstore01", "minimum_tls_version": "TLS1_0"}], "diagnostic_settings": _base_azure_diag, **_ext_azure}
+sc03_aws   = {**{"iam": _base_iam, "s3": {"buckets": [{"name": "prod-data", "default_encryption_enabled": False}]}, "cloudtrail": _base_ct, "ec2": {"security_groups": []}}, **_ext_aws}
+sc03_azure = {"conditional_access": {"mfa_policy_enabled": True}, "storage_accounts": [{"name": "prodstore01", "minimum_tls_version": "TLS1_0"}], "diagnostic_settings": _base_diag, **_ext_azure}
 sc03_gcp   = {"cloud_storage": {"buckets": [{"name": "gs-prod", "public_access_prevention": "unspecified", "uniform_bucket_level_access": False}]}, "audit_logs": {"admin_activity_enabled": True}, "iam": _base_gcp_sa, "vpc": {"firewall_rules": []}, **_ext_gcp}
 
 # SC-04: Logging disabled across all providers
-sc04_aws   = {**{"iam": _base_aws_iam, "s3": {"buckets": [{"name": "prod-data", "default_encryption_enabled": True}]}, "cloudtrail": {"trails": [{"name": "mgmt-trail", "is_logging": False}], "log_file_validation_enabled": True, "s3_object_lock_enabled": True, "retention_days": 365}, "ec2": {"security_groups": []}}, **_ext_aws}
+sc04_aws   = {**{"iam": _base_iam, "s3": {"buckets": [{"name": "prod-data", "default_encryption_enabled": True}]}, "cloudtrail": {"trails": [{"name": "mgmt-trail", "is_logging": False}], "log_file_validation_enabled": True, "s3_object_lock_enabled": True, "retention_days": 365}, "ec2": {"security_groups": []}}, **_ext_aws}
 sc04_azure = {"conditional_access": {"mfa_policy_enabled": True}, "storage_accounts": [{"name": "prodstore01", "minimum_tls_version": "TLS1_2"}], "diagnostic_settings": {"activity_log_enabled": False, "log_retention_days": 90, "immutable_storage_enabled": True}, **_ext_azure}
 sc04_gcp   = {"cloud_storage": _base_gcp_storage, "audit_logs": {"admin_activity_enabled": False}, "iam": _base_gcp_sa, "vpc": {"firewall_rules": []}, **_ext_gcp}
 
 # SC-05: Open SSH (AWS) + permissive firewall (GCP)
-sc05_aws   = {**{"iam": _base_aws_iam, "s3": {"buckets": [{"name": "logs", "default_encryption_enabled": True}]}, "cloudtrail": _base_aws_ct, "ec2": {"security_groups": [{"group_id": "sg-0abc123", "inbound_rules": [{"cidr": "0.0.0.0/0", "port": 22, "protocol": "tcp"}, {"cidr": "10.0.0.0/8", "port": 443, "protocol": "tcp"}]}]}}, **_ext_aws}
-sc05_azure = {"conditional_access": {"mfa_policy_enabled": True}, "storage_accounts": [{"name": "auditlogs01", "minimum_tls_version": "TLS1_2"}], "diagnostic_settings": _base_azure_diag, **_ext_azure}
+sc05_aws   = {**{"iam": _base_iam, "s3": {"buckets": [{"name": "logs", "default_encryption_enabled": True}]}, "cloudtrail": _base_ct, "ec2": {"security_groups": [{"group_id": "sg-0abc123", "inbound_rules": [{"cidr": "0.0.0.0/0", "port": 22, "protocol": "tcp"}, {"cidr": "10.0.0.0/8", "port": 443, "protocol": "tcp"}]}]}}, **_ext_aws}
+sc05_azure = {"conditional_access": {"mfa_policy_enabled": True}, "storage_accounts": [{"name": "auditlogs01", "minimum_tls_version": "TLS1_2"}], "diagnostic_settings": _base_diag, **_ext_azure}
 sc05_gcp   = {"cloud_storage": {"buckets": [{"name": "backup-bucket", "public_access_prevention": "enforced", "uniform_bucket_level_access": True}]}, "audit_logs": {"admin_activity_enabled": True}, "iam": _base_gcp_sa, "vpc": {"firewall_rules": [{"name": "allow-all-inbound", "source_ranges": ["0.0.0.0/0"], "action": "allow", "ports": ["all"]}]}, **_ext_gcp}
 
 # SC-06: Dormant accounts (AWS, GCP) + insufficient log retention (AWS, Azure)
@@ -764,14 +1040,14 @@ sc06_aws   = {**{"iam": {"policies": [{"name": "ReadOnlyPolicy", "actions": ["s3
 sc06_azure = {"conditional_access": {"mfa_policy_enabled": True}, "storage_accounts": [{"name": "prodstore01", "minimum_tls_version": "TLS1_2"}], "diagnostic_settings": {"activity_log_enabled": True, "log_retention_days": 60, "immutable_storage_enabled": True}, **_ext_azure}
 sc06_gcp   = {"cloud_storage": _base_gcp_storage, "audit_logs": {"admin_activity_enabled": True}, "iam": {"service_accounts": [{"name": "svc-dataflow@proj.iam", "last_used_days": 30}, {"name": "svc-archive@proj.iam", "last_used_days": 210}]}, "vpc": {"firewall_rules": []}, **_ext_gcp}
 
-# SC-07: Full 15-control compliant baseline
-sc07_aws   = {**{"iam": _base_aws_iam, "s3": {"buckets": [{"name": "prod-data", "default_encryption_enabled": True}]}, "cloudtrail": _base_aws_ct, "ec2": {"security_groups": []}}, **_ext_aws}
-sc07_azure = {"conditional_access": {"mfa_policy_enabled": True}, "storage_accounts": [{"name": "prodstore01", "minimum_tls_version": "TLS1_2"}], "diagnostic_settings": _base_azure_diag, **_ext_azure}
-sc07_gcp   = {"cloud_storage": _base_gcp_storage, "audit_logs": {"admin_activity_enabled": True}, "iam": _base_gcp_sa, "vpc": {"firewall_rules": []}, **_ext_gcp}
+# SC-07: Full 20-control compliant baseline
+sc07_aws   = sc01_aws
+sc07_azure = sc01_azure
+sc07_gcp   = sc01_gcp
 
-# SC-08: Full 15-control failure (all new controls failing)
-sc08_aws   = {**{"iam": _base_aws_iam, "s3": {"buckets": [{"name": "prod-data", "default_encryption_enabled": True}]}, "cloudtrail": _base_aws_ct, "ec2": {"security_groups": []}}, "kms": {"keys": [{"key_id": "key-prod-01", "rotation_enabled": False}]}, "monitoring": {"cloudwatch_alarms_enabled": False, "security_hub_enabled": False}, "vpc": {"vpcs": [{"vpc_id": "vpc-default", "name": "default"}]}, "backup": {"backup_plan_enabled": False, "retention_days": 0}, "aws_config": {"config_rules_enabled": False, "drift_detection_enabled": False}, "security_hub": {"enabled": False}}
-sc08_azure = {"conditional_access": {"mfa_policy_enabled": True}, "storage_accounts": [{"name": "prodstore01", "minimum_tls_version": "TLS1_2"}], "diagnostic_settings": _base_azure_diag, "key_vault": {"keys": [{"name": "prod-key-01", "rotation_policy_enabled": False}]}, "defender_for_cloud": {"alerts_enabled": False, "sentinel_integration": False, "enabled": False, "secure_score_enabled": False}, "network": {"vnets": [{"name": "vnet-default"}]}, "backup": {"backup_vault_enabled": False, "retention_days": 0}, "azure_policy": {"policy_assignments_enabled": False, "defender_posture_enabled": False}}
+# SC-08: Full 20-control failure (all new controls failing)
+sc08_aws   = {**{"iam": _base_iam, "s3": {"buckets": [{"name": "prod-data", "default_encryption_enabled": True}]}, "cloudtrail": _base_ct, "ec2": {"security_groups": []}}, "kms": {"keys": [{"key_id": "key-prod-01", "rotation_enabled": False}]}, "monitoring": {"cloudwatch_alarms_enabled": False, "security_hub_enabled": False}, "vpc": {"vpcs": [{"vpc_id": "vpc-default", "name": "default"}]}, "backup": {"backup_plan_enabled": False, "retention_days": 0}, "aws_config": {"config_rules_enabled": False, "drift_detection_enabled": False}, "security_hub": {"enabled": False}}
+sc08_azure = {"conditional_access": {"mfa_policy_enabled": True}, "storage_accounts": [{"name": "prodstore01", "minimum_tls_version": "TLS1_2"}], "diagnostic_settings": _base_diag, "key_vault": {"keys": [{"name": "prod-key-01", "rotation_policy_enabled": False}]}, "defender_for_cloud": {"alerts_enabled": False, "sentinel_integration": False, "enabled": False, "secure_score_enabled": False}, "network": {"vnets": [{"name": "vnet-default"}]}, "backup": {"backup_vault_enabled": False, "retention_days": 0}, "azure_policy": {"policy_assignments_enabled": False, "defender_posture_enabled": False}}
 sc08_gcp   = {"cloud_storage": _base_gcp_storage, "audit_logs": {"admin_activity_enabled": True}, "iam": _base_gcp_sa, "vpc": {"firewall_rules": []}, "cloud_kms": {"keys": [{"name": "prod-key-01", "rotation_schedule_enabled": False}]}, "security_command_center": {"findings_enabled": False, "alerting_policies_enabled": False, "premium_enabled": False, "asset_inventory_enabled": False}, "vpc_networks": {"networks": [{"name": "vpc-default"}]}, "backup": {"automated_backups_enabled": False, "retention_days": 0}, "org_policy": {"constraints_enabled": False, "security_health_analytics_enabled": False}}
 
 
@@ -780,14 +1056,14 @@ sc08_gcp   = {"cloud_storage": _base_gcp_storage, "audit_logs": {"admin_activity
 # ─────────────────────────────────────────────
 
 _HARDCODED: dict[str, tuple] = {
-    "SC-01": ("SC-01: Fully Compliant Baseline",                                                  sc01_aws, sc01_azure, sc01_gcp),
-    "SC-02": ("SC-02: Over-privileged IAM (AWS) / MFA Disabled (Azure)",                          sc02_aws, sc02_azure, sc02_gcp),
-    "SC-03": ("SC-03: Encryption Disabled (AWS) / Weak TLS (Azure) / Public Bucket (GCP)",        sc03_aws, sc03_azure, sc03_gcp),
-    "SC-04": ("SC-04: Logging Disabled (All Providers)",                                           sc04_aws, sc04_azure, sc04_gcp),
-    "SC-05": ("SC-05: Open SSH (AWS) / Permissive Firewall (GCP)",                                sc05_aws, sc05_azure, sc05_gcp),
-    "SC-06": ("SC-06: Dormant Accounts (AWS, GCP) / Insufficient Log Retention (AWS, Azure)",     sc06_aws, sc06_azure, sc06_gcp),
-    "SC-07": ("SC-07: Full 15-Control Compliant Baseline",                                        sc07_aws, sc07_azure, sc07_gcp),
-    "SC-08": ("SC-08: Full 15-Control Failure Scenario (All New Controls Failing)",               sc08_aws, sc08_azure, sc08_gcp),
+    "SC-01": ("SC-01: Fully Compliant Baseline",                                                  sc01_aws, sc01_azure, sc01_gcp, org_compliant),
+    "SC-02": ("SC-02: Over-privileged IAM (AWS) / MFA Disabled (Azure)",                          sc02_aws, sc02_azure, sc02_gcp, org_compliant),
+    "SC-03": ("SC-03: Encryption Disabled (AWS) / Weak TLS (Azure) / Public Bucket (GCP)",        sc03_aws, sc03_azure, sc03_gcp, org_compliant),
+    "SC-04": ("SC-04: Logging Disabled (All Providers)",                                           sc04_aws, sc04_azure, sc04_gcp, org_compliant),
+    "SC-05": ("SC-05: Open SSH (AWS) / Permissive Firewall (GCP)",                                sc05_aws, sc05_azure, sc05_gcp, org_compliant),
+    "SC-06": ("SC-06: Dormant Accounts (AWS, GCP) / Insufficient Log Retention (AWS, Azure)",     sc06_aws, sc06_azure, sc06_gcp, org_compliant),
+    "SC-07": ("SC-07: Full 20-Control Compliant Baseline",                                        sc07_aws, sc07_azure, sc07_gcp, org_compliant),
+    "SC-08": ("SC-08: Full 20-Control Failure Scenario (All New Controls Failing)",               sc08_aws, sc08_azure, sc08_gcp, org_failing),
 }
 
 SCENARIOS: dict[str, tuple] = {}
@@ -836,8 +1112,11 @@ if __name__ == "__main__":
     if args.format == "json":
         os.makedirs("results", exist_ok=True)
 
-    for label, aws_cfg, azure_cfg, gcp_cfg in to_run:
-        report = run_scenario(label, aws_cfg, azure_cfg, gcp_cfg)
+    for entry in to_run:
+        label, aws_cfg, azure_cfg, gcp_cfg = entry[0], entry[1], entry[2], entry[3]
+        org_cfg = entry[4] if len(entry) > 4 else {}
+        report  = run_scenario(label, aws_cfg, azure_cfg, gcp_cfg, org_cfg)
+
         if args.format == "json":
             sc_id    = "sc-custom" if sc == "CUSTOM" else label.split(":")[0].strip().lower()
             out_path = f"results/{sc_id}.json"
