@@ -1,1 +1,57 @@
-
+{
+  "scenario_id": "SC-03",
+  "description": "S3 bucket with encryption disabled (AWS); weak TLS on storage accounts (Azure); GCP Cloud Storage bucket with public access enabled",
+  "expected_outcome": "ENC-01 FAIL (AWS); ENC-02 FAIL (Azure); NET-01 FAIL (GCP)",
+  "key_controls_tested": ["ENC-01", "ENC-02", "NET-01"],
+  "aws": {
+    "iam": {
+      "policies": [
+        {"name": "ReadOnlyPolicy", "actions": ["s3:GetObject"]}
+      ],
+      "users": [
+        {"username": "ops-user", "mfa_enabled": true, "last_used_days": 4}
+      ]
+    },
+    "s3": {
+      "buckets": [
+        {"name": "prod-data", "default_encryption_enabled": false}
+      ]
+    },
+    "cloudtrail": {
+      "trails": [{"name": "mgmt-trail", "is_logging": true}],
+      "log_file_validation_enabled": true,
+      "s3_object_lock_enabled": true,
+      "retention_days": 365
+    },
+    "ec2": {"security_groups": []}
+  },
+  "azure": {
+    "conditional_access": {"mfa_policy_enabled": true},
+    "storage_accounts": [
+      {"name": "prodstore01", "minimum_tls_version": "TLS1_0"}
+    ],
+    "diagnostic_settings": {
+      "activity_log_enabled": true,
+      "log_retention_days": 90,
+      "immutable_storage_enabled": true
+    }
+  },
+  "gcp": {
+    "cloud_storage": {
+      "buckets": [
+        {
+          "name": "gs-prod",
+          "public_access_prevention": "unspecified",
+          "uniform_bucket_level_access": false
+        }
+      ]
+    },
+    "audit_logs": {"admin_activity_enabled": true},
+    "iam": {
+      "service_accounts": [
+        {"name": "svc-dataflow@proj.iam", "last_used_days": 20}
+      ]
+    },
+    "vpc": {"firewall_rules": []}
+  }
+}
