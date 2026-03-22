@@ -36,11 +36,21 @@ header{display:flex;align-items:flex-start;justify-content:space-between;flex-wr
 
 .section-label{font-size:11px;font-weight:500;color:#8b949e;text-transform:uppercase;letter-spacing:.06em;margin:20px 0 8px}
 
-.legend{display:flex;gap:16px;margin-bottom:14px;font-size:12px;color:#8b949e;flex-wrap:wrap}
+.fw-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px;margin-bottom:8px}
+.fw-card{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:14px 16px}
+.fw-name{font-size:13px;font-weight:500;color:#f0f6fc;margin-bottom:2px}
+.fw-full{font-size:11px;color:#58a6ff;margin-bottom:6px}
+.fw-desc{font-size:11px;color:#8b949e;margin-bottom:10px;line-height:1.5}
+.fw-controls{display:flex;flex-wrap:wrap;gap:5px}
+.fw-ctrl{font-family:ui-monospace,monospace;font-size:10px;background:#21262d;color:#e6edf3;padding:2px 6px;border-radius:4px}
+.fw-ctrl.org{background:#2a2a1a;color:#e3b341}
+
+.legend{display:flex;gap:16px;margin-bottom:14px;font-size:12px;color:#8b949e;flex-wrap:wrap;align-items:center}
 .legend span{display:flex;align-items:center;gap:6px}
 .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
 .dot.pass{background:#3fb950}
 .dot.fail{background:#f85149}
+.leg-org{font-family:ui-monospace,monospace;font-size:10px;background:#2a2a1a;color:#e3b341;padding:2px 6px;border-radius:4px}
 
 .grid{display:flex;flex-direction:column;gap:10px}
 .card{background:#161b22;border:1px solid #30363d;border-radius:8px;overflow:hidden}
@@ -71,18 +81,15 @@ tr.fr td{background:#1a0d0d}
 .prov.aws{background:#1a2a1a;color:#3fb950}
 .prov.azure{background:#1a1a3a;color:#58a6ff}
 .prov.gcp{background:#2a1a1a;color:#ffa657}
+.prov.org{background:#2a2a1a;color:#e3b341}
 .refs{color:#8b949e;font-size:11px;line-height:1.7}
 .attr{font-family:ui-monospace,monospace;font-size:10px;color:#8b949e}
 .df{color:#f85149;font-size:12px}
 .dp{color:#e6edf3;font-size:12px}
 
-.fw-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px;margin-bottom:24px}
-.fw-card{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:14px 16px}
-.fw-name{font-size:13px;font-weight:500;color:#f0f6fc;margin-bottom:4px}
-.fw-desc{font-size:11px;color:#8b949e;margin-bottom:10px;line-height:1.5}
-.fw-controls{display:flex;flex-wrap:wrap;gap:5px}
-.fw-ctrl{font-family:ui-monospace,monospace;font-size:10px;background:#21262d;color:#e6edf3;padding:2px 6px;border-radius:4px}
-.fw-ctrl.org{background:#2a2a1a;color:#e3b341}
+.msg{text-align:center;padding:60px 20px;color:#8b949e;font-size:14px}
+.err{background:#3a1a1a;border:1px solid #da3633;border-radius:8px;padding:14px 18px;color:#f85149;font-size:13px;margin-bottom:20px}
+footer{margin-top:28px;font-size:11px;color:#484f58;text-align:center;padding-bottom:8px}
 </style>
 </head>
 <body>
@@ -90,7 +97,7 @@ tr.fr td{background:#1a0d0d}
 <header>
   <div class="header-left">
     <h1>AMCAF — Multi-Cloud Compliance Dashboard</h1>
-    <p>Automated Multi-Cloud Compliance Assurance Framework &nbsp;·&nbsp; v1.0 &nbsp;·&nbsp; AWS · Azure · GCP · 15 controls</p>
+    <p>Automated Multi-Cloud Compliance Assurance Framework &nbsp;·&nbsp; v1.0 &nbsp;·&nbsp; AWS · Azure · GCP · 20 controls · 10 frameworks</p>
   </div>
   <div class="btn-row">
     <a class="btn btn-ghost" href="history.html">
@@ -112,20 +119,21 @@ tr.fr td{background:#1a0d0d}
 <div id="err"></div>
 <div id="meta" class="meta-bar"></div>
 
-<div class="legend">
+<div class="section-label">Regulatory frameworks covered</div>
+<div id="fw-grid" class="fw-grid"></div>
+
+<div class="legend" style="margin-top:16px">
   <span><span class="dot pass"></span>PASS — control satisfied</span>
   <span><span class="dot fail"></span>FAIL — misconfiguration detected</span>
+  <span><span class="leg-org">ORG</span> — organisational-level control</span>
 </div>
-
-<div class="section-label">Regulatory frameworks covered</div>
-<div class="fw-grid" id="fw-grid"></div>
 
 <div class="section-label">Standard scenarios — SC-01 to SC-06</div>
 <div id="grid-standard" class="grid">
   <div class="msg">Loading results…</div>
 </div>
 
-<div class="section-label">Extended scenarios — full 15-control coverage</div>
+<div class="section-label">Extended scenarios — full 20-control coverage</div>
 <div id="grid-extended" class="grid">
   <div class="msg">Loading results…</div>
 </div>
@@ -140,10 +148,9 @@ tr.fr td{background:#1a0d0d}
 
 <script>
 const BASE = 'https://raw.githubusercontent.com/DMA-1970/AMCAF/main/results/';
-
-const STANDARD_IDS  = ['sc-01','sc-02','sc-03','sc-04','sc-05','sc-06'];
-const EXTENDED_IDS  = ['sc-07','sc-08'];
-const CUSTOM_ID     = 'sc-custom';
+const STANDARD_IDS = ['sc-01','sc-02','sc-03','sc-04','sc-05','sc-06'];
+const EXTENDED_IDS = ['sc-07','sc-08'];
+const CUSTOM_ID    = 'sc-custom';
 
 const LABELS = {
   'sc-01':    'SC-01 — Fully compliant baseline',
@@ -152,88 +159,79 @@ const LABELS = {
   'sc-04':    'SC-04 — Logging disabled across all providers',
   'sc-05':    'SC-05 — Open SSH (AWS) / Permissive firewall (GCP)',
   'sc-06':    'SC-06 — Dormant accounts (AWS, GCP) / Insufficient log retention (AWS, Azure)',
-  'sc-07':    'SC-07 — Full 15-control compliant baseline',
-  'sc-08':    'SC-08 — Full 15-control failure scenario (all new controls failing)',
+  'sc-07':    'SC-07 — Full 20-control compliant baseline',
+  'sc-08':    'SC-08 — Full 20-control failure scenario (all new controls failing)',
   'sc-custom':'SC-CUSTOM — Custom scenario',
 };
 
+const ORG_CONTROLS = new Set(['IAM-04','DAT-01','DAT-02','INC-01','TPM-01']);
+
 const FRAMEWORKS = [
   {
-    name: 'DORA',
-    full: 'EU Digital Operational Resilience Act',
-    desc: 'ICT risk management, incident reporting and third-party oversight for EU financial entities.',
-    controls: ['IAM-01','IAM-03','IAM-04','LOG-01','LOG-02','LOG-03','INC-01','NET-01','NET-02','RES-01','RES-02','RES-03','TPM-01','DAT-02'],
+    name:'DORA', full:'EU Digital Operational Resilience Act',
+    desc:'ICT risk management, incident reporting and third-party oversight for EU financial entities.',
+    controls:['IAM-01','IAM-03','IAM-04','LOG-01','LOG-02','LOG-03','INC-01','NET-01','NET-02','RES-01','RES-02','RES-03','TPM-01','DAT-02'],
   },
   {
-    name: 'FCA PS21/3',
-    full: 'FCA Operational Resilience Policy Statement',
-    desc: 'UK operational resilience, important business services and impact tolerance requirements.',
-    controls: ['IAM-01','IAM-02','IAM-03','IAM-04','LOG-01','LOG-02','LOG-03','INC-01','NET-03','RES-01','RES-02','RES-03','TPM-01'],
+    name:'FCA PS21/3', full:'FCA Operational Resilience Policy Statement',
+    desc:'UK operational resilience, important business services and impact tolerance requirements.',
+    controls:['IAM-01','IAM-02','IAM-03','IAM-04','LOG-01','LOG-02','LOG-03','INC-01','NET-03','RES-01','RES-02','RES-03','TPM-01'],
   },
   {
-    name: 'UK GDPR',
-    full: 'UK General Data Protection Regulation',
-    desc: 'Data protection, encryption, accountability and breach notification obligations.',
-    controls: ['ENC-01','ENC-02','ENC-03','LOG-02','DAT-01','DAT-02'],
+    name:'UK GDPR', full:'UK General Data Protection Regulation',
+    desc:'Data protection, encryption, accountability and breach notification obligations.',
+    controls:['ENC-01','ENC-02','ENC-03','LOG-02','DAT-01','DAT-02'],
   },
   {
-    name: 'ISO 27001',
-    full: 'ISO/IEC 27001 Information Security Management',
-    desc: 'International standard for information security management systems and controls.',
-    controls: ['IAM-01','IAM-02','IAM-03','IAM-04','ENC-01','ENC-02','ENC-03','LOG-01','LOG-02','LOG-03','INC-01','NET-01','NET-02','NET-03','DAT-01','DAT-02','RES-01','RES-02','RES-03','TPM-01'],
+    name:'ISO 27001', full:'ISO/IEC 27001 Information Security Management',
+    desc:'International standard for information security management systems and controls.',
+    controls:['IAM-01','IAM-02','IAM-03','IAM-04','ENC-01','ENC-02','ENC-03','LOG-01','LOG-02','LOG-03','INC-01','NET-01','NET-02','NET-03','DAT-01','DAT-02','RES-01','RES-02','RES-03','TPM-01'],
   },
   {
-    name: 'NIST CSF',
-    full: 'NIST Cybersecurity Framework',
-    desc: 'US framework for managing and reducing cybersecurity risk across identify, protect, detect, respond and recover functions.',
-    controls: ['IAM-01','IAM-02','IAM-03','IAM-04','ENC-01','ENC-02','ENC-03','LOG-01','LOG-02','LOG-03','INC-01','NET-01','NET-02','NET-03','DAT-01','DAT-02','RES-01','RES-02','RES-03','TPM-01'],
+    name:'NIST CSF', full:'NIST Cybersecurity Framework',
+    desc:'US framework for managing cybersecurity risk across identify, protect, detect, respond and recover functions.',
+    controls:['IAM-01','IAM-02','IAM-03','IAM-04','ENC-01','ENC-02','ENC-03','LOG-01','LOG-02','LOG-03','INC-01','NET-01','NET-02','NET-03','DAT-01','DAT-02','RES-01','RES-02','RES-03','TPM-01'],
   },
   {
-    name: 'CSSF 22/806',
-    full: 'CSSF Circular 22/806 — ICT and Security Risk',
-    desc: 'Luxembourg financial regulator requirements for ICT risk, access controls, logging, incident management and outsourcing.',
-    controls: ['IAM-01','IAM-02','IAM-04','LOG-01','LOG-02','LOG-03','INC-01','NET-01','RES-01','RES-02','RES-03','TPM-01'],
+    name:'CSSF 22/806', full:'CSSF Circular 22/806 — ICT and Security Risk',
+    desc:'Luxembourg financial regulator requirements for ICT risk, access controls, logging, incident management and outsourcing.',
+    controls:['IAM-01','IAM-02','IAM-04','LOG-01','LOG-02','LOG-03','INC-01','NET-01','RES-01','RES-02','RES-03','TPM-01'],
   },
   {
-    name: 'NDPR',
-    full: 'Nigeria Data Protection Regulation',
-    desc: 'Nigerian data protection framework covering security safeguards, data subject rights and breach notification.',
-    controls: ['ENC-01','ENC-02','DAT-01','DAT-02'],
+    name:'NDPR', full:'Nigeria Data Protection Regulation',
+    desc:'Nigerian data protection framework covering security safeguards, data subject rights and breach notification.',
+    controls:['ENC-01','ENC-02','DAT-01','DAT-02'],
   },
   {
-    name: 'MAS TRM',
-    full: 'MAS Technology Risk Management Guidelines',
-    desc: 'Monetary Authority of Singapore guidelines covering system resilience, access controls, cryptography and audit logging.',
-    controls: ['IAM-01','IAM-02','IAM-03','IAM-04','ENC-01','ENC-02','ENC-03','LOG-01','LOG-02','LOG-03','INC-01','NET-01','NET-02','NET-03','DAT-01','RES-01','RES-02','RES-03','TPM-01'],
+    name:'MAS TRM', full:'MAS Technology Risk Management Guidelines',
+    desc:'Monetary Authority of Singapore guidelines covering system resilience, access controls, cryptography and audit logging.',
+    controls:['IAM-01','IAM-02','IAM-03','IAM-04','ENC-01','ENC-02','ENC-03','LOG-01','LOG-02','LOG-03','INC-01','NET-01','NET-02','NET-03','DAT-01','RES-01','RES-02','RES-03','TPM-01'],
   },
   {
-    name: 'PCI DSS v4.0',
-    full: 'Payment Card Industry Data Security Standard v4.0',
-    desc: 'Security standard for organisations handling payment card data, covering network, access, encryption and monitoring.',
-    controls: ['IAM-01','IAM-02','IAM-03','IAM-04','ENC-01','ENC-02','ENC-03','LOG-01','LOG-02','LOG-03','NET-01','NET-02','NET-03','RES-01'],
+    name:'PCI DSS v4.0', full:'Payment Card Industry Data Security Standard v4.0',
+    desc:'Security standard for organisations handling payment card data covering network, access, encryption and monitoring.',
+    controls:['IAM-01','IAM-02','IAM-03','IAM-04','ENC-01','ENC-02','ENC-03','LOG-01','LOG-02','LOG-03','NET-01','NET-02','NET-03','RES-01'],
   },
   {
-    name: 'SOC 2 Type II',
-    full: 'SOC 2 Type II — Trust Service Criteria',
-    desc: 'AICPA trust service criteria for security, availability and confidentiality of systems and data.',
-    controls: ['IAM-01','IAM-02','IAM-03','ENC-01','ENC-02','ENC-03','LOG-01','LOG-02','LOG-03','NET-01','NET-02','NET-03','DAT-01','RES-01','RES-02','RES-03'],
+    name:'SOC 2 Type II', full:'SOC 2 Type II — Trust Service Criteria',
+    desc:'AICPA trust service criteria for security, availability and confidentiality of systems and data.',
+    controls:['IAM-01','IAM-02','IAM-03','ENC-01','ENC-02','ENC-03','LOG-01','LOG-02','LOG-03','NET-01','NET-02','NET-03','DAT-01','RES-01','RES-02','RES-03'],
   },
 ];
-
-const ORG_CONTROLS = new Set(['IAM-04','DAT-01','DAT-02','INC-01','TPM-01']);
 
 function buildFrameworkPanel(){
   document.getElementById('fw-grid').innerHTML = FRAMEWORKS.map(fw=>`
     <div class="fw-card">
       <div class="fw-name">${fw.name}</div>
-      <div class="fw-desc">${fw.full} — ${fw.desc}</div>
+      <div class="fw-full">${fw.full}</div>
+      <div class="fw-desc">${fw.desc}</div>
       <div class="fw-controls">
         ${fw.controls.map(c=>`<span class="fw-ctrl${ORG_CONTROLS.has(c)?' org':''}">${c}</span>`).join('')}
       </div>
     </div>`).join('');
 }
 
-
+async function get(url){
   const r = await fetch(url+'?nc='+Date.now());
   if(!r.ok) throw new Error(r.status);
   return r.json();
@@ -272,9 +270,8 @@ function metaBar(ds){
     <div class="meta-card neutral"><div class="val">0</div><div class="lbl">False positives</div></div>`;
 }
 
-function card(data, scId, uid, isCustom){
+function card(data,scId,uid,isCustom){
   const m=data.report_metadata;
-  const rateClass = rc(m.compliance_rate);
   const rows=data.findings.map(f=>`
     <tr class="${f.status==='FAIL'?'fr':''}">
       <td><span class="ctrl">${f.control_id}</span></td>
@@ -284,17 +281,15 @@ function card(data, scId, uid, isCustom){
       <td><div class="refs">${f.regulatory_refs.join('<br>')}</div></td>
       <td><span class="attr">${f.config_attribute}</span></td>
     </tr>`).join('');
-  const label = LABELS[scId] || scId;
-  const customTag = isCustom ? bdg('custom','custom') : '';
   return `
     <div class="card">
       <div class="card-hdr" onclick="tog('${uid}')">
-        <span class="card-title">${label}</span>
+        <span class="card-title">${LABELS[scId]||scId}</span>
         <div class="badges">
-          ${customTag}
-          ${bdg('pass', m.passed+' pass')}
+          ${isCustom?bdg('custom','custom'):''}
+          ${bdg('pass',m.passed+' pass')}
           ${m.failed>0?bdg('fail',m.failed+' fail'):''}
-          ${bdg(rateClass, m.compliance_rate)}
+          ${bdg(rc(m.compliance_rate),m.compliance_rate)}
         </div>
         <span class="chev" id="c-${uid}">&#9654;</span>
       </div>
@@ -307,8 +302,8 @@ function card(data, scId, uid, isCustom){
     </div>`;
 }
 
-async function loadGroup(ids, targetId, isCustom){
-  const res=[], errs=[];
+async function loadGroup(ids,targetId,isCustom){
+  const res=[],errs=[];
   await Promise.all(ids.map(async(id,i)=>{
     try{ res[i]=await get(BASE+id+'.json'); }
     catch(_){ errs.push(id); res[i]=null; }
@@ -317,33 +312,27 @@ async function loadGroup(ids, targetId, isCustom){
   if(!valid.length){
     document.getElementById(targetId).innerHTML=
       '<div class="msg">No results yet — run a simulation to generate them.</div>';
-    return {valid:[], errs};
+    return {valid:[],errs};
   }
   document.getElementById(targetId).innerHTML=
-    valid.map((d,i)=>card(d, ids[i], ids[i], isCustom)).join('');
-  return {valid, errs};
+    valid.map((d,i)=>card(d,ids[i],ids[i],isCustom)).join('');
+  return {valid,errs};
 }
 
 async function init(){
   buildFrameworkPanel();
   await loadMeta();
-
-  const {valid:std, errs:stdErr} = await loadGroup(STANDARD_IDS,  'grid-standard', false);
-  const {valid:ext, errs:extErr} = await loadGroup(EXTENDED_IDS,  'grid-extended', false);
-
-  // custom — silent if missing
+  const {valid:std,errs:stdErr} = await loadGroup(STANDARD_IDS,'grid-standard',false);
+  const {valid:ext,errs:extErr} = await loadGroup(EXTENDED_IDS,'grid-extended',false);
   try{
-    const customData = await get(BASE+CUSTOM_ID+'.json');
+    const customData=await get(BASE+CUSTOM_ID+'.json');
     document.getElementById('custom-label').style.display='block';
-    document.getElementById('grid-custom').innerHTML=
-      card(customData, CUSTOM_ID, CUSTOM_ID, true);
-    metaBar([...std, ...ext, customData]);
+    document.getElementById('grid-custom').innerHTML=card(customData,CUSTOM_ID,CUSTOM_ID,true);
+    metaBar([...std,...ext,customData]);
   }catch(_){
-    metaBar([...std, ...ext]);
+    metaBar([...std,...ext]);
   }
-
-  // show errors for standard + extended only
-  const realErrs = [...stdErr, ...extErr];
+  const realErrs=[...stdErr,...extErr];
   if(realErrs.length){
     document.getElementById('err').innerHTML=
       `<div class="err">⚠ Could not load: ${realErrs.join(', ')} — run the simulation to generate them.</div>`;
