@@ -469,7 +469,30 @@ def run_scenario(
 
 
 # ─────────────────────────────────────────────
-# SCENARIO DATA
+# SCENARIO LOADER
+# Reads scenario config from configs/ folder.
+# Falls back to hardcoded data if file not found.
+# ─────────────────────────────────────────────
+
+def load_scenario_from_file(sc_id: str) -> tuple | None:
+    """Load scenario config from configs/scenario-XX.json if it exists."""
+    num = sc_id.lower().replace("sc-", "")
+    path = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),
+        "..", "..", "configs", f"scenario-{num}.json"
+    )
+    try:
+        with open(path) as f:
+            data = json.load(f)
+        label = f"{data['scenario_id']}: {data['description']}"
+        return label, data["aws"], data["azure"], data["gcp"]
+    except (FileNotFoundError, KeyError):
+        return None
+
+
+# ─────────────────────────────────────────────
+# HARDCODED SCENARIO DATA (fallback)
+# Used when configs/ JSON files are not present.
 # ─────────────────────────────────────────────
 
 sc01_aws = {
@@ -665,10 +688,12 @@ sc06_gcp = {
 
 # ─────────────────────────────────────────────
 # SCENARIO REGISTRY
+# Tries to load from configs/ first.
+# Falls back to hardcoded data if not found.
 # Add new scenarios here — no other changes needed.
 # ─────────────────────────────────────────────
 
-SCENARIOS: dict[str, tuple] = {
+_HARDCODED: dict[str, tuple] = {
     "SC-01": ("SC-01: Fully Compliant Baseline",                                              sc01_aws, sc01_azure, sc01_gcp),
     "SC-02": ("SC-02: Over-privileged IAM (AWS) / MFA Disabled (Azure)",                      sc02_aws, sc02_azure, sc02_gcp),
     "SC-03": ("SC-03: Encryption Disabled (AWS) / Weak TLS (Azure) / Public Bucket (GCP)",    sc03_aws, sc03_azure, sc03_gcp),
@@ -676,6 +701,29 @@ SCENARIOS: dict[str, tuple] = {
     "SC-05": ("SC-05: Open SSH (AWS) / Permissive Firewall (GCP)",                            sc05_aws, sc05_azure, sc05_gcp),
     "SC-06": ("SC-06: Dormant Accounts (AWS, GCP) / Insufficient Log Retention (AWS, Azure)", sc06_aws, sc06_azure, sc06_gcp),
 }
+
+SCENARIOS: dict[str, tuple] = {}
+for _id, _fallback in _HARDCODED.items():
+    _from_file = load_scenario_from_file(_id)
+    SCENARIOS[_id] = _from_file if _from_file else _fallback
+
+# CUSTOM scenario — loaded from configs/scenario-custom.json if present
+def load_custom_scenario() -> tuple | None:
+    path = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),
+        "..", "..", "configs", "scenario-custom.json"
+    )
+    try:
+        with open(path) as f:
+            data = json.load(f)
+        label = f"SC-CUSTOM: {data.get('description', 'Custom scenario')}"
+        return label, data["aws"], data["azure"], data["gcp"]
+    except (FileNotFoundError, KeyError):
+        return None
+
+_custom = load_custom_scenario()
+if _custom:
+    SCENARIOS["CUSTOM"] = _custom
 
 
 # ─────────────────────────────────────────────

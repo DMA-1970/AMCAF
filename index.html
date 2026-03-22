@@ -121,14 +121,15 @@ footer{margin-top:28px;font-size:11px;color:#484f58;text-align:center;padding-bo
 
 <script>
 const BASE = 'https://raw.githubusercontent.com/DMA-1970/AMCAF/main/results/';
-const IDS  = ['sc-01','sc-02','sc-03','sc-04','sc-05','sc-06'];
+const IDS  = ['sc-01','sc-02','sc-03','sc-04','sc-05','sc-06','sc-custom'];
 const LABELS = {
   'sc-01':'SC-01 — Fully compliant baseline',
   'sc-02':'SC-02 — Over-privileged IAM (AWS) / MFA disabled (Azure)',
   'sc-03':'SC-03 — Encryption disabled (AWS) / Weak TLS (Azure) / Public bucket (GCP)',
   'sc-04':'SC-04 — Logging disabled across all providers',
   'sc-05':'SC-05 — Open SSH (AWS) / Permissive firewall (GCP)',
-  'sc-06':'SC-06 — Dormant accounts (AWS, GCP) / Insufficient log retention (AWS, Azure)'
+  'sc-06':'SC-06 — Dormant accounts (AWS, GCP) / Insufficient log retention (AWS, Azure)',
+  'sc-custom':'SC-CUSTOM — Custom scenario'
 };
 
 async function get(url){
