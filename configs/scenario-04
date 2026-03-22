@@ -1,1 +1,57 @@
-
+{
+  "scenario_id": "SC-04",
+  "description": "CloudTrail disabled on AWS; Azure Activity Log diagnostic settings not configured; GCP Admin Activity logs suppressed",
+  "expected_outcome": "LOG-01 FAIL (AWS, Azure, GCP)",
+  "key_controls_tested": ["LOG-01"],
+  "aws": {
+    "iam": {
+      "policies": [
+        {"name": "ReadOnlyPolicy", "actions": ["s3:GetObject"]}
+      ],
+      "users": [
+        {"username": "ops-user", "mfa_enabled": true, "last_used_days": 5}
+      ]
+    },
+    "s3": {
+      "buckets": [
+        {"name": "prod-data", "default_encryption_enabled": true}
+      ]
+    },
+    "cloudtrail": {
+      "trails": [{"name": "mgmt-trail", "is_logging": false}],
+      "log_file_validation_enabled": true,
+      "s3_object_lock_enabled": true,
+      "retention_days": 365
+    },
+    "ec2": {"security_groups": []}
+  },
+  "azure": {
+    "conditional_access": {"mfa_policy_enabled": true},
+    "storage_accounts": [
+      {"name": "prodstore01", "minimum_tls_version": "TLS1_2"}
+    ],
+    "diagnostic_settings": {
+      "activity_log_enabled": false,
+      "log_retention_days": 90,
+      "immutable_storage_enabled": true
+    }
+  },
+  "gcp": {
+    "cloud_storage": {
+      "buckets": [
+        {
+          "name": "gs-prod",
+          "public_access_prevention": "enforced",
+          "uniform_bucket_level_access": true
+        }
+      ]
+    },
+    "audit_logs": {"admin_activity_enabled": false},
+    "iam": {
+      "service_accounts": [
+        {"name": "svc-dataflow@proj.iam", "last_used_days": 8}
+      ]
+    },
+    "vpc": {"firewall_rules": []}
+  }
+}
