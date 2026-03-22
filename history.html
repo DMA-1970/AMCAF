@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AMCAF — Run History</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:system-ui,-apple-system,sans-serif;background:#0d1117;color:#e6edf3;min-height:100vh;padding:24px 28px}
+  a{color:#58a6ff;text-decoration:none}
+  a:hover{text-decoration:underline}
+
+  header{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:16px;margin-bottom:24px}
+  .header-left h1{font-size:22px;font-weight:600;color:#f0f6fc;margin-bottom:4px}
+  .header-left p{font-size:13px;color:#8b949e}
+  .btn-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .back-btn{display:inline-flex;align-items:center;gap:8px;background:#161b22;color:#e6edf3;border:1px solid #30363d;border-radius:6px;padding:8px 16px;font-size:13px;font-weight:500;text-decoration:none;white-space:nowrap;transition:background .15s}
+  .back-btn:hover{background:#21262d;text-decoration:none}
+  .run-btn{display:inline-flex;align-items:center;gap:8px;background:#238636;color:#fff;border:1px solid #2ea043;border-radius:6px;padding:8px 16px;font-size:13px;font-weight:500;text-decoration:none;white-space:nowrap;transition:background .15s}
+  .run-btn:hover{background:#2ea043;text-decoration:none}
+
+  .summary-bar{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap}
+  .sum-card{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:14px 18px;min-width:120px;flex:1}
+  .sum-card .val{font-size:26px;font-weight:600;line-height:1;color:#e6edf3}
+  .sum-card .lbl{font-size:11px;color:#8b949e;margin-top:4px}
+
+  .history-grid{display:flex;flex-direction:column;gap:10px}
+  .hist-card{background:#161b22;border:1px solid #30363d;border-radius:8px;overflow:hidden}
+  .hist-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;cursor:pointer;user-select:none;gap:12px}
+  .hist-header:hover{background:#1c2128}
+  .hist-run{font-family:ui-monospace,monospace;font-size:11px;background:#21262d;padding:2px 7px;border-radius:4px;color:#e6edf3;flex-shrink:0}
+  .hist-meta{flex:1;margin-left:10px}
+  .hist-title{font-size:13px;font-weight:500;color:#f0f6fc}
+  .hist-sub{font-size:11px;color:#8b949e;margin-top:3px}
+  .hist-badges{display:flex;gap:6px;align-items:center;flex-shrink:0}
+  .badge{font-size:11px;font-weight:500;padding:2px 8px;border-radius:12px}
+  .badge.pass{background:#1a3a2a;color:#3fb950;border:1px solid #2ea043}
+  .badge.fail{background:#3a1a1a;color:#f85149;border:1px solid #da3633}
+  .badge.rate{background:#1a2a3a;color:#58a6ff;border:1px solid #1f6feb}
+  .badge.perfect{background:#1a3a2a;color:#3fb950;border:1px solid #2ea043}
+  .chevron{color:#8b949e;font-size:11px;transition:transform .2s;flex-shrink:0}
+  .chevron.open{transform:rotate(90deg)}
+
+  .hist-body{display:none;border-top:1px solid #30363d}
+  .hist-body.open{display:block}
+  .hist-scenarios{display:flex;flex-direction:column;gap:6px;padding:12px 16px}
+
+  .sc-row{background:#0d1117;border-radius:6px;overflow:hidden}
+  .sc-row-header{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;cursor:pointer;gap:8px}
+  .sc-row-header:hover{background:#161b22}
+  .sc-row-title{font-size:12px;color:#e6edf3;flex:1}
+  .sc-row-badges{display:flex;gap:6px;flex-shrink:0}
+  .sc-row-chevron{color:#8b949e;font-size:10px;transition:transform .2s;flex-shrink:0}
+  .sc-row-chevron.open{transform:rotate(90deg)}
+  .sc-findings{display:none;border-top:1px solid #21262d;overflow-x:auto}
+  .sc-findings.open{display:block}
+
+  table{width:100%;border-collapse:collapse;font-size:11px;min-width:500px}
+  th{background:#0a0d13;color:#8b949e;font-weight:500;text-align:left;padding:7px 12px;border-bottom:1px solid #30363d;white-space:nowrap}
+  td{padding:7px 12px;border-bottom:1px solid #1c2128;vertical-align:top}
+  tr:last-child td{border-bottom:none}
+  tr.fail-row td{background:#150a0a}
+  .s-pass{color:#3fb950;font-weight:600}
+  .s-fail{color:#f85149;font-weight:600}
+  .ctrl{font-family:ui-monospace,monospace;font-size:10px;background:#21262d;padding:1px 5px;border-radius:3px}
+  .prov{font-size:10px;padding:1px 6px;border-radius:3px;font-weight:500}
+  .prov.aws{background:#1a2a1a;color:#3fb950}
+  .prov.azure{background:#1a1a3a;color:#58a6ff}
+  .prov.gcp{background:#2a1a1a;color:#ffa657}
+  .refs{color:#8b949e;font-size:10px;line-height:1.6}
+  .attr{font-family:ui-monospace,monospace;font-size:9px;color:#8b949e}
+  .detail-fail{color:#f85149;font-size:11px}
+  .detail-pass{color:#c9d1d9;font-size:11px}
+
+  .empty{text-align:center;padding:60px 20px;color:#8b949e;font-size:14px}
+  .loading{text-align:center;padding:60px 20px;color:#8b949e;font-size:14px}
+  footer{margin-top:28px;font-size:11px;color:#484f58;text-align:center;padding-bottom:8px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <h1>AMCAF — Run History</h1>
+    <p>All simulation runs &nbsp;·&nbsp; most recent first</p>
+  </div>
+  <div class="btn-row">
+    <a class="back-btn" href="index.html">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M7.78 12.53a.75.75 0 0 1-1.06 0L2.47 8.28a.75.75 0 0 1 0-1.06l4.25-4.25a.75.75 0 0 1 1.06 1.06L4.81 7h7.44a.75.75 0 0 1 0 1.5H4.81l2.97 2.97a.75.75 0 0 1 0 1.06z"/></svg>
+      Back to dashboard
+    </a>
+    <a class="run-btn" href="https://github.com/DMA-1970/AMCAF/actions/workflows/run-simulation.yml" target="_blank" rel="noopener">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0zm0 1.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13zm0 3a.75.75 0 0 1 .75.75v3.5l2.25 1.3a.75.75 0 1 1-.75 1.3L7.5 9.5A.75.75 0 0 1 7 8.75v-4A.75.75 0 0 1 8 4.5z"/></svg>
+      Run simulation
+    </a>
+  </div>
+</header>
+
+<div id="summary-bar" class="summary-bar"></div>
+<div id="history-grid" class="history-grid">
+  <div class="loading">Loading run history…</div>
+</div>
+
+<footer>
+  AMCAF v1.0 &nbsp;·&nbsp; MSc Enterprise IT Management, University of Essex Online &nbsp;·&nbsp;
+  <a href="https://github.com/DMA-1970/AMCAF" target="_blank" rel="noopener">GitHub</a>
+</footer>
+
+<script>
+const BASE = 'https://raw.githubusercontent.com/DMA-1970/AMCAF/main/results/';
+const SC_LABELS = {
+  'sc-01':'SC-01 — Fully compliant baseline',
+  'sc-02':'SC-02 — Over-privileged IAM (AWS) / MFA disabled (Azure)',
+  'sc-03':'SC-03 — Encryption disabled (AWS) / Weak TLS (Azure) / Public bucket (GCP)',
+  'sc-04':'SC-04 — Logging disabled across all providers',
+  'sc-05':'SC-05 — Open SSH (AWS) / Permissive firewall (GCP)',
+  'sc-06':'SC-06 — Dormant accounts (AWS, GCP) / Insufficient log retention (AWS, Azure)',
+};
+
+async function fetchJSON(url){
+  const r = await fetch(url+'?nc='+Date.now());
+  if(!r.ok) throw new Error(r.status);
+  return r.json();
+}
+
+function badge(cls,txt){return `<span class="badge ${cls}">${txt}</span>`}
+function prov(p){return `<span class="prov ${p.toLowerCase()}">${p}</span>`}
+function rateClass(r){const n=parseFloat(r);return n===100?'perfect':n>=80?'rate':'fail'}
+
+function buildFindingsTable(findings){
+  const rows = findings.map(f=>`
+    <tr class="${f.status==='FAIL'?'fail-row':''}">
+      <td><span class="ctrl">${f.control_id}</span></td>
+      <td>${prov(f.provider)}</td>
+      <td><span class="s-${f.status.toLowerCase()}">${f.status}</span></td>
+      <td class="${f.status==='FAIL'?'detail-fail':'detail-pass'}">${f.detail}</td>
+      <td><div class="refs">${f.regulatory_refs.join('<br>')}</div></td>
+      <td><span class="attr">${f.config_attribute}</span></td>
+    </tr>`).join('');
+  return `<table>
+    <thead><tr>
+      <th>Control</th><th>Provider</th><th>Status</th>
+      <th>Finding</th><th>Regulatory refs</th><th>Config attribute</th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+}
+
+function buildHistCard(entry, cardIdx){
+  const s  = entry.summary;
+  const rc = rateClass(s.compliance_rate);
+  const ts = new Date(entry.timestamp).toLocaleString();
+
+  const scRows = (entry.scenarios||[]).map((sc, si)=>{
+    const m   = sc.report_metadata;
+    const src = rateClass(m.compliance_rate);
+    const scId = `sc-0${si+1}`;
+    const label = SC_LABELS[scId] || scId;
+    return `
+      <div class="sc-row">
+        <div class="sc-row-header" onclick="togSc('${cardIdx}-${si}')">
+          <span class="sc-row-title">${label}</span>
+          <div class="sc-row-badges">
+            ${badge('pass', m.passed+' pass')}
+            ${m.failed>0?badge('fail',m.failed+' fail'):''}
+            ${badge(src, m.compliance_rate)}
+          </div>
+          <span class="sc-row-chevron" id="schev-${cardIdx}-${si}">&#9654;</span>
+        </div>
+        <div class="sc-findings" id="scbody-${cardIdx}-${si}">
+          ${buildFindingsTable(sc.findings||[])}
+        </div>
+      </div>`;
+  }).join('');
+
+  return `
+    <div class="hist-card">
+      <div class="hist-header" onclick="togHist(${cardIdx})">
+        <span class="hist-run">#${entry.run_number}</span>
+        <div class="hist-meta">
+          <div class="hist-title">${entry.scenario} &nbsp;·&nbsp; ${ts}</div>
+          <div class="hist-sub">Triggered by ${entry.triggered_by} &nbsp;·&nbsp;
+            <a href="${entry.run_url}" target="_blank" rel="noopener" onclick="event.stopPropagation()">view log →</a>
+          </div>
+        </div>
+        <div class="hist-badges">
+          ${badge('pass', s.passed+' pass')}
+          ${s.failed>0?badge('fail',s.failed+' fail'):''}
+          ${badge(rc, s.compliance_rate)}
+        </div>
+        <span class="chevron" id="chev-${cardIdx}">&#9654;</span>
+      </div>
+      <div class="hist-body" id="body-${cardIdx}">
+        <div class="hist-scenarios">
+          ${scRows||'<div style="color:#8b949e;font-size:12px;padding:8px">No scenario detail for this run.</div>'}
+        </div>
+      </div>
+    </div>`;
+}
+
+function togHist(i){
+  document.getElementById('body-'+i).classList.toggle('open');
+  document.getElementById('chev-'+i).classList.toggle('open');
+}
+function togSc(id){
+  document.getElementById('scbody-'+id).classList.toggle('open');
+  document.getElementById('schev-'+id).classList.toggle('open');
+}
+
+async function init(){
+  try{
+    const index = await fetchJSON(BASE+'history/index.json');
+
+    document.getElementById('summary-bar').innerHTML=`
+      <div class="sum-card"><div class="val">${index.length}</div><div class="lbl">Total runs</div></div>
+      <div class="sum-card"><div class="val">${index.filter(e=>e.scenario==='ALL').length}</div><div class="lbl">Full runs (ALL)</div></div>
+      <div class="sum-card"><div class="val">${index[0]?new Date(index[0].timestamp).toLocaleDateString():'—'}</div><div class="lbl">Latest run</div></div>
+      <div class="sum-card"><div class="val">${index[0]?index[0].summary.compliance_rate:'—'}</div><div class="lbl">Latest compliance</div></div>`;
+
+    if(!index.length){
+      document.getElementById('history-grid').innerHTML=
+        '<div class="empty">No runs recorded yet. Trigger the workflow to start building history.</div>';
+      return;
+    }
+
+    const cards = await Promise.all(index.map(async(entry,i)=>{
+      try{
+        const full = await fetchJSON(BASE+'history/'+entry.file);
+        return buildHistCard(full, i);
+      }catch(_){
+        return buildHistCard(entry, i);
+      }
+    }));
+
+    document.getElementById('history-grid').innerHTML = cards.join('');
+
+  }catch(_){
+    document.getElementById('history-grid').innerHTML=
+      '<div class="empty">No history found. Run a simulation to start recording history.</div>';
+  }
+}
+
+init();
+</script>
+</body>
+</html>
