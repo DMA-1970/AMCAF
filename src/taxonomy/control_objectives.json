@@ -1,112 +1,240 @@
 {
   "framework": "AMCAF v1.0",
   "description": "Technology-neutral regulatory control taxonomy for multi-cloud financial services compliance",
-  "regulatory_sources": ["DORA", "FCA PS21/3", "UK GDPR", "ISO/IEC 27001", "NIST CSF"],
+  "regulatory_sources": [
+    "DORA", "FCA PS21/3", "UK GDPR", "ISO/IEC 27001", "NIST CSF",
+    "CSSF Circular 22/806", "NDPR", "MAS TRM", "PCI DSS v4.0", "SOC 2 Type II"
+  ],
+  "control_domains": [
+    "Identity & Access Management",
+    "Data Protection & Encryption",
+    "Data Governance",
+    "Logging & Monitoring",
+    "Incident Management",
+    "Network Security",
+    "Third-Party Management",
+    "Operational Resilience"
+  ],
   "controls": [
     {
       "control_id": "IAM-01",
       "domain": "Identity & Access Management",
       "objective": "Privileged access restricted; least-privilege enforced",
-      "regulatory_refs": ["NIST CSF PR.AC-4", "ISO 27001 A.9.2", "DORA Art. 9"],
-      "implemented": true
+      "regulatory_refs": [
+        "NIST CSF PR.AC-4", "ISO 27001 A.9.2", "DORA Art. 9",
+        "CSSF 22/806 §3.2", "MAS TRM 6.1", "PCI DSS v4.0 Req 7", "SOC 2 CC6.3"
+      ],
+      "implemented": true,
+      "providers": ["AWS", "Azure", "GCP"]
     },
     {
       "control_id": "IAM-02",
       "domain": "Identity & Access Management",
       "objective": "MFA enforced for all administrative access",
-      "regulatory_refs": ["FCA PS21/3", "NIST CSF PR.AC-7", "ISO 27001 A.9.4"],
-      "implemented": true
+      "regulatory_refs": [
+        "FCA PS21/3", "NIST CSF PR.AC-7", "ISO 27001 A.9.4",
+        "CSSF 22/806 §3.3", "MAS TRM 6.2", "PCI DSS v4.0 Req 8", "SOC 2 CC6.1"
+      ],
+      "implemented": true,
+      "providers": ["AWS", "Azure"]
     },
     {
       "control_id": "IAM-03",
       "domain": "Identity & Access Management",
       "objective": "Periodic access review enforced; dormant accounts disabled",
-      "regulatory_refs": ["DORA Art. 9", "FCA PS21/3", "ISO 27001 A.9.2.5", "NIST CSF PR.AC-1"],
-      "implemented": true
+      "regulatory_refs": [
+        "DORA Art. 9", "FCA PS21/3", "ISO 27001 A.9.2.5",
+        "NIST CSF PR.AC-1", "MAS TRM 6.3", "PCI DSS v4.0 Req 8.6", "SOC 2 CC6.2"
+      ],
+      "implemented": true,
+      "providers": ["AWS", "GCP"]
+    },
+    {
+      "control_id": "IAM-04",
+      "domain": "Identity & Access Management",
+      "objective": "Privileged access workstations enforced; standing privilege eliminated",
+      "regulatory_refs": [
+        "CSSF 22/806 §3.4", "MAS TRM 6.4", "ISO 27001 A.9.2.3",
+        "NIST CSF PR.AC-4", "PCI DSS v4.0 Req 7.2"
+      ],
+      "implemented": true,
+      "providers": ["ORG"]
     },
     {
       "control_id": "ENC-01",
       "domain": "Data Protection & Encryption",
       "objective": "Data at rest encrypted by default for all storage resources",
-      "regulatory_refs": ["UK GDPR Art. 32", "ISO 27001 A.10.1", "NIST CSF PR.DS-1"],
-      "implemented": true
+      "regulatory_refs": [
+        "UK GDPR Art. 32", "ISO 27001 A.10.1", "NIST CSF PR.DS-1",
+        "NDPR Art. 2.1(c)", "MAS TRM 9.1", "PCI DSS v4.0 Req 3", "SOC 2 CC6.7"
+      ],
+      "implemented": true,
+      "providers": ["AWS"]
     },
     {
       "control_id": "ENC-02",
       "domain": "Data Protection & Encryption",
       "objective": "Data in transit protected; unencrypted protocols disabled",
-      "regulatory_refs": ["UK GDPR Art. 32", "ISO 27001 A.10.1", "NIST CSF PR.DS-2"],
-      "implemented": true
+      "regulatory_refs": [
+        "UK GDPR Art. 32", "ISO 27001 A.10.1", "NIST CSF PR.DS-2",
+        "NDPR Art. 2.1(c)", "MAS TRM 9.2", "PCI DSS v4.0 Req 4", "SOC 2 CC6.7"
+      ],
+      "implemented": true,
+      "providers": ["Azure"]
     },
     {
       "control_id": "ENC-03",
       "domain": "Data Protection & Encryption",
-      "objective": "Customer-managed key management with rotation enforced",
-      "regulatory_refs": ["UK GDPR Art. 32", "ISO 27001 A.10.1", "NIST CSF PR.DS-1"],
-      "implemented": false
+      "objective": "Customer-managed key rotation enforced across all key management services",
+      "regulatory_refs": [
+        "UK GDPR Art. 32", "ISO 27001 A.10.1", "NIST CSF PR.DS-1",
+        "MAS TRM 9.3", "PCI DSS v4.0 Req 3.7", "SOC 2 CC6.7"
+      ],
+      "implemented": true,
+      "providers": ["AWS", "Azure", "GCP"]
+    },
+    {
+      "control_id": "DAT-01",
+      "domain": "Data Governance",
+      "objective": "Data classification enforced; regulated data inventoried and tagged",
+      "regulatory_refs": [
+        "NDPR Art. 2.1(a)", "UK GDPR Art. 5", "ISO 27001 A.8.2",
+        "NIST CSF ID.AM-5", "MAS TRM 4.1", "SOC 2 CC6.5"
+      ],
+      "implemented": true,
+      "providers": ["ORG"]
+    },
+    {
+      "control_id": "DAT-02",
+      "domain": "Data Governance",
+      "objective": "Data subject rights management; breach notification within required period",
+      "regulatory_refs": [
+        "NDPR Art. 4.1", "UK GDPR Art. 33", "ISO 27001 A.16.1.2",
+        "NIST CSF RS.CO-2", "DORA Art. 19"
+      ],
+      "implemented": true,
+      "providers": ["ORG"]
     },
     {
       "control_id": "LOG-01",
       "domain": "Logging & Monitoring",
       "objective": "Management plane audit logging enabled in all regions",
-      "regulatory_refs": ["DORA Art. 10", "FCA PS21/3", "ISO 27001 A.12.4"],
-      "implemented": true
+      "regulatory_refs": [
+        "DORA Art. 10", "FCA PS21/3", "ISO 27001 A.12.4",
+        "CSSF 22/806 §5.1", "MAS TRM 11.1", "PCI DSS v4.0 Req 10", "SOC 2 CC7.2"
+      ],
+      "implemented": true,
+      "providers": ["AWS", "Azure", "GCP"]
     },
     {
       "control_id": "LOG-02",
       "domain": "Logging & Monitoring",
       "objective": "Audit log retention meets minimum period; tamper protection enabled",
-      "regulatory_refs": ["DORA Art. 10", "FCA PS21/3", "ISO 27001 A.12.4.1", "UK GDPR Art. 5(2)"],
-      "implemented": true
+      "regulatory_refs": [
+        "DORA Art. 10", "FCA PS21/3", "ISO 27001 A.12.4.1", "UK GDPR Art. 5(2)",
+        "CSSF 22/806 §5.2", "MAS TRM 11.2", "PCI DSS v4.0 Req 10.7", "SOC 2 CC7.2"
+      ],
+      "implemented": true,
+      "providers": ["AWS", "Azure"]
     },
     {
       "control_id": "LOG-03",
       "domain": "Logging & Monitoring",
-      "objective": "Real-time alerting for security events and anomalies",
-      "regulatory_refs": ["DORA Art. 10", "FCA PS21/3", "ISO 27001 A.12.4"],
-      "implemented": false
+      "objective": "Real-time alerting configured for security events and anomalies",
+      "regulatory_refs": [
+        "DORA Art. 10", "FCA PS21/3", "ISO 27001 A.12.4", "NIST CSF DE.AE-1",
+        "CSSF 22/806 §5.3", "MAS TRM 11.3", "PCI DSS v4.0 Req 10.6", "SOC 2 CC7.3"
+      ],
+      "implemented": true,
+      "providers": ["AWS", "Azure", "GCP"]
+    },
+    {
+      "control_id": "INC-01",
+      "domain": "Incident Management",
+      "objective": "ICT incidents classified, escalated and notified to regulators within required timeframes",
+      "regulatory_refs": [
+        "DORA Art. 19", "CSSF 22/806 §7.1", "FCA PS21/3",
+        "ISO 27001 A.16.1", "NIST CSF RS.CO-3", "MAS TRM 13.1"
+      ],
+      "implemented": true,
+      "providers": ["ORG"]
     },
     {
       "control_id": "NET-01",
       "domain": "Network Security",
       "objective": "Default-deny network access; no unrestricted inbound rules",
-      "regulatory_refs": ["NIST CSF PR.AC-5", "ISO 27001 A.13.1", "DORA Art. 9"],
-      "implemented": true
+      "regulatory_refs": [
+        "NIST CSF PR.AC-5", "ISO 27001 A.13.1", "DORA Art. 9",
+        "CSSF 22/806 §4.1", "MAS TRM 7.1", "PCI DSS v4.0 Req 1", "SOC 2 CC6.6"
+      ],
+      "implemented": true,
+      "providers": ["AWS", "GCP"]
     },
     {
       "control_id": "NET-02",
       "domain": "Network Security",
-      "objective": "Network segmentation by workload sensitivity classification",
-      "regulatory_refs": ["NIST CSF PR.AC-5", "ISO 27001 A.13.1", "DORA Art. 9"],
-      "implemented": false
+      "objective": "Network segmentation enforced by workload sensitivity classification",
+      "regulatory_refs": [
+        "NIST CSF PR.AC-5", "ISO 27001 A.13.1", "DORA Art. 9",
+        "MAS TRM 7.2", "PCI DSS v4.0 Req 1.3", "SOC 2 CC6.6"
+      ],
+      "implemented": true,
+      "providers": ["AWS", "Azure", "GCP"]
     },
     {
       "control_id": "NET-03",
       "domain": "Network Security",
       "objective": "Public management interfaces restricted to authorised sources",
-      "regulatory_refs": ["FCA PS21/3", "NIST CSF PR.AC-5", "ISO 27001 A.9.1.2"],
-      "implemented": true
+      "regulatory_refs": [
+        "FCA PS21/3", "NIST CSF PR.AC-5", "ISO 27001 A.9.1.2",
+        "MAS TRM 7.3", "PCI DSS v4.0 Req 2.2", "SOC 2 CC6.6"
+      ],
+      "implemented": true,
+      "providers": ["AWS", "GCP"]
+    },
+    {
+      "control_id": "TPM-01",
+      "domain": "Third-Party Management",
+      "objective": "Critical ICT third-party providers identified, assessed and contractually governed",
+      "regulatory_refs": [
+        "DORA Art. 28", "CSSF 22/806 §8.1", "FCA PS21/3",
+        "ISO 27001 A.15.1", "NIST CSF ID.SC-2", "MAS TRM 14.1"
+      ],
+      "implemented": true,
+      "providers": ["ORG"]
     },
     {
       "control_id": "RES-01",
       "domain": "Operational Resilience",
-      "objective": "Automated backups configured with defined RPO",
-      "regulatory_refs": ["DORA Art. 12", "FCA PS21/3", "ISO 27001 A.17.1"],
-      "implemented": false
+      "objective": "Automated backups configured with defined retention and RPO",
+      "regulatory_refs": [
+        "DORA Art. 12", "FCA PS21/3", "ISO 27001 A.17.1", "NIST CSF PR.IP-4",
+        "CSSF 22/806 §6.1", "MAS TRM 12.1", "PCI DSS v4.0 Req 12.3", "SOC 2 A1.2"
+      ],
+      "implemented": true,
+      "providers": ["AWS", "Azure", "GCP"]
     },
     {
       "control_id": "RES-02",
       "domain": "Operational Resilience",
-      "objective": "Infrastructure-as-code enforced; configuration drift detected",
-      "regulatory_refs": ["DORA Art. 9", "FCA PS21/3", "ISO 27001 A.12.1"],
-      "implemented": false
+      "objective": "Infrastructure-as-code enforced; configuration drift continuously detected",
+      "regulatory_refs": [
+        "DORA Art. 9", "FCA PS21/3", "ISO 27001 A.12.1", "NIST CSF PR.IP-1",
+        "CSSF 22/806 §6.2", "MAS TRM 12.2", "SOC 2 CC8.1"
+      ],
+      "implemented": true,
+      "providers": ["AWS", "Azure", "GCP"]
     },
     {
       "control_id": "RES-03",
       "domain": "Operational Resilience",
-      "objective": "Centralised findings aggregation and remediation tracking",
-      "regulatory_refs": ["DORA Art. 10", "FCA PS21/3", "ISO 27001 A.16.1"],
-      "implemented": false
+      "objective": "Centralised security findings aggregation and remediation tracking enabled",
+      "regulatory_refs": [
+        "DORA Art. 10", "FCA PS21/3", "ISO 27001 A.16.1", "NIST CSF RS.AN-1",
+        "CSSF 22/806 §5.4", "MAS TRM 11.4", "SOC 2 CC7.4"
+      ],
+      "implemented": true,
+      "providers": ["AWS", "Azure", "GCP"]
     }
   ]
 }
