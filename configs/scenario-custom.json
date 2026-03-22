@@ -1,0 +1,113 @@
+{
+  "scenario_id": "SC-CUSTOM",
+  "description": "Custom: Dormant accounts (AWS), Logging disabled (all), Public bucket (GCP)",
+  "expected_outcome": "Depends on selected toggles",
+  "key_controls_tested": [
+    "IAM-01",
+    "IAM-02",
+    "IAM-03",
+    "ENC-01",
+    "ENC-02",
+    "LOG-01",
+    "LOG-02",
+    "NET-01",
+    "NET-03"
+  ],
+  "aws": {
+    "iam": {
+      "policies": [
+        {
+          "name": "ReadOnlyPolicy",
+          "actions": [
+            "s3:GetObject"
+          ]
+        }
+      ],
+      "users": [
+        {
+          "username": "ops-user",
+          "mfa_enabled": true,
+          "last_used_days": 5
+        },
+        {
+          "username": "admin-user",
+          "mfa_enabled": true,
+          "last_used_days": 12
+        },
+        {
+          "username": "svc-legacy",
+          "mfa_enabled": true,
+          "last_used_days": 142
+        },
+        {
+          "username": "audit-reader",
+          "mfa_enabled": true,
+          "last_used_days": null
+        }
+      ]
+    },
+    "s3": {
+      "buckets": [
+        {
+          "name": "prod-data",
+          "default_encryption_enabled": true
+        }
+      ]
+    },
+    "cloudtrail": {
+      "trails": [
+        {
+          "name": "mgmt-trail",
+          "is_logging": false
+        }
+      ],
+      "log_file_validation_enabled": true,
+      "s3_object_lock_enabled": true,
+      "retention_days": 365
+    },
+    "ec2": {
+      "security_groups": []
+    }
+  },
+  "azure": {
+    "conditional_access": {
+      "mfa_policy_enabled": true
+    },
+    "storage_accounts": [
+      {
+        "name": "prodstore01",
+        "minimum_tls_version": "TLS1_2"
+      }
+    ],
+    "diagnostic_settings": {
+      "activity_log_enabled": false,
+      "log_retention_days": 90,
+      "immutable_storage_enabled": true
+    }
+  },
+  "gcp": {
+    "cloud_storage": {
+      "buckets": [
+        {
+          "name": "gs-prod",
+          "public_access_prevention": "unspecified",
+          "uniform_bucket_level_access": false
+        }
+      ]
+    },
+    "audit_logs": {
+      "admin_activity_enabled": false
+    },
+    "iam": {
+      "service_accounts": [
+        {
+          "name": "svc-dataflow@proj.iam",
+          "last_used_days": 10
+        }
+      ]
+    },
+    "vpc": {
+      "firewall_rules": []
+    }
+  }
+}
