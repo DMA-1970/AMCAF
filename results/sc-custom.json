@@ -1,11 +1,11 @@
 {
   "report_metadata": {
     "framework": "AMCAF v1.0",
-    "generated_at": "2026-03-22T18:43:04.958208Z",
+    "generated_at": "2026-03-22T18:46:57.186960Z",
     "total_checks": 16,
-    "passed": 11,
-    "failed": 5,
-    "compliance_rate": "68.8%"
+    "passed": 6,
+    "failed": 10,
+    "compliance_rate": "37.5%"
   },
   "findings": [
     {
@@ -18,8 +18,8 @@
         "ISO 27001 A.9.2",
         "DORA Art. 9"
       ],
-      "status": "PASS",
-      "detail": "IAM policies comply with least-privilege requirement",
+      "status": "FAIL",
+      "detail": "Wildcard (*) action found in IAM policy",
       "config_attribute": "iam.policies[].actions"
     },
     {
@@ -104,8 +104,8 @@
         "ISO 27001 A.13.1",
         "DORA Art. 9"
       ],
-      "status": "PASS",
-      "detail": "No security groups permit unrestricted inbound access",
+      "status": "FAIL",
+      "detail": "Unrestricted inbound (0.0.0.0/0) on SGs: ['sg-custom']",
       "config_attribute": "ec2.security_groups[].inbound_rules"
     },
     {
@@ -118,8 +118,8 @@
         "NIST CSF PR.AC-5",
         "ISO 27001 A.9.1.2"
       ],
-      "status": "PASS",
-      "detail": "No management ports (22/3389) exposed to 0.0.0.0/0",
+      "status": "FAIL",
+      "detail": "Public management port exposure: ['sg-custom port 22']",
       "config_attribute": "ec2.security_groups[].inbound_rules[port=22|3389]"
     },
     {
@@ -132,8 +132,8 @@
         "NIST CSF PR.AC-7",
         "ISO 27001 A.9.4"
       ],
-      "status": "PASS",
-      "detail": "Conditional Access MFA policy is active",
+      "status": "FAIL",
+      "detail": "No active Conditional Access policy enforcing MFA",
       "config_attribute": "conditional_access.mfa_policy_enabled"
     },
     {
@@ -146,8 +146,8 @@
         "ISO 27001 A.10.1",
         "NIST CSF PR.DS-2"
       ],
-      "status": "PASS",
-      "detail": "All storage accounts enforce minimum TLS 1.2",
+      "status": "FAIL",
+      "detail": "Weak TLS (<1.2) on storage accounts: ['prodstore01']",
       "config_attribute": "storage_accounts[].minimum_tls_version"
     },
     {

@@ -1,6 +1,6 @@
 {
   "scenario_id": "SC-CUSTOM",
-  "description": "Custom: Dormant accounts (AWS), Logging disabled (all), Public bucket (GCP)",
+  "description": "Custom: IAM wildcard (AWS), MFA disabled (Azure), Dormant accounts (AWS), Weak TLS (Azure), Logging disabled (all), Open SSH (AWS), Public bucket (GCP)",
   "expected_outcome": "Depends on selected toggles",
   "key_controls_tested": [
     "IAM-01",
@@ -17,9 +17,9 @@
     "iam": {
       "policies": [
         {
-          "name": "ReadOnlyPolicy",
+          "name": "AdminPolicy",
           "actions": [
-            "s3:GetObject"
+            "*"
           ]
         }
       ],
@@ -66,17 +66,33 @@
       "retention_days": 365
     },
     "ec2": {
-      "security_groups": []
+      "security_groups": [
+        {
+          "group_id": "sg-custom",
+          "inbound_rules": [
+            {
+              "cidr": "0.0.0.0/0",
+              "port": 22,
+              "protocol": "tcp"
+            },
+            {
+              "cidr": "10.0.0.0/8",
+              "port": 443,
+              "protocol": "tcp"
+            }
+          ]
+        }
+      ]
     }
   },
   "azure": {
     "conditional_access": {
-      "mfa_policy_enabled": true
+      "mfa_policy_enabled": false
     },
     "storage_accounts": [
       {
         "name": "prodstore01",
-        "minimum_tls_version": "TLS1_2"
+        "minimum_tls_version": "TLS1_0"
       }
     ],
     "diagnostic_settings": {

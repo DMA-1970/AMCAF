@@ -1,5 +1,19 @@
 [
   {
+    "run_number": 16,
+    "timestamp": "2026-03-22T18:46:57.240169Z",
+    "triggered_by": "DMA-1970",
+    "scenario": "CUSTOM",
+    "run_url": "https://github.com/DMA-1970/AMCAF/actions/runs/23409938645",
+    "file": "run-0016-2026-03-22T184657240169Z.json",
+    "summary": {
+      "total_checks": 112,
+      "passed": 87,
+      "failed": 25,
+      "compliance_rate": "77.7%"
+    }
+  },
+  {
     "run_number": 15,
     "timestamp": "2026-03-22T18:43:05.003806Z",
     "triggered_by": "DMA-1970",
