@@ -1,11 +1,11 @@
 {
   "report_metadata": {
     "framework": "AMCAF v1.0",
-    "generated_at": "2026-03-22T20:28:32.948442Z",
+    "generated_at": "2026-03-23T11:33:01.233511Z",
     "total_checks": 25,
-    "passed": 13,
-    "failed": 12,
-    "compliance_rate": "52.0%",
+    "passed": 14,
+    "failed": 11,
+    "compliance_rate": "56.0%",
     "framework_filter": "CSSF"
   },
   "findings": [
@@ -78,8 +78,8 @@
         "PCI DSS v4.0 Req 10.7",
         "SOC 2 CC7.2"
       ],
-      "status": "FAIL",
-      "detail": "Log integrity/retention failures: S3 Object Lock not configured on log bucket; retention 180 days below 365-day minimum",
+      "status": "PASS",
+      "detail": "Log file validation enabled; S3 Object Lock configured; retention >= 365 days",
       "config_attribute": "cloudtrail.log_file_validation_enabled | cloudtrail.s3_object_lock_enabled | cloudtrail.retention_days"
     },
     {
@@ -115,8 +115,8 @@
         "PCI DSS v4.0 Req 1",
         "SOC 2 CC6.6"
       ],
-      "status": "FAIL",
-      "detail": "Unrestricted inbound (0.0.0.0/0) on SGs: ['sg-custom']",
+      "status": "PASS",
+      "detail": "No security groups permit unrestricted inbound access",
       "config_attribute": "ec2.security_groups[].inbound_rules"
     },
     {
@@ -134,8 +134,8 @@
         "PCI DSS v4.0 Req 12.3",
         "SOC 2 A1.2"
       ],
-      "status": "FAIL",
-      "detail": "Backup configuration failures: no AWS Backup plan configured; retention 0 days below 30-day minimum",
+      "status": "PASS",
+      "detail": "AWS Backup plan active; retention >= 30 days",
       "config_attribute": "backup.backup_plan_enabled | backup.retention_days"
     },
     {
@@ -152,8 +152,8 @@
         "MAS TRM 12.2",
         "SOC 2 CC8.1"
       ],
-      "status": "PASS",
-      "detail": "AWS Config rules active; CloudFormation drift detection enabled",
+      "status": "FAIL",
+      "detail": "Configuration drift gaps: AWS Config rules not enabled; CloudFormation drift detection not enabled",
       "config_attribute": "aws_config.config_rules_enabled | aws_config.drift_detection_enabled"
     },
     {
@@ -188,8 +188,8 @@
         "PCI DSS v4.0 Req 8",
         "SOC 2 CC6.1"
       ],
-      "status": "PASS",
-      "detail": "Conditional Access MFA policy is active",
+      "status": "FAIL",
+      "detail": "No active Conditional Access policy enforcing MFA",
       "config_attribute": "conditional_access.mfa_policy_enabled"
     },
     {
@@ -225,8 +225,8 @@
         "PCI DSS v4.0 Req 10.7",
         "SOC 2 CC7.2"
       ],
-      "status": "FAIL",
-      "detail": "Log retention/integrity failures: Log Analytics retention 60 days below 90-day minimum",
+      "status": "PASS",
+      "detail": "Log Analytics retention >= 90 days; immutable storage enabled",
       "config_attribute": "diagnostic_settings.log_retention_days | diagnostic_settings.immutable_storage_enabled"
     },
     {
@@ -263,8 +263,8 @@
         "PCI DSS v4.0 Req 12.3",
         "SOC 2 A1.2"
       ],
-      "status": "FAIL",
-      "detail": "Backup configuration failures: no Azure Backup vault configured; retention 0 days below 30-day minimum",
+      "status": "PASS",
+      "detail": "Azure Backup vault active; retention >= 30 days",
       "config_attribute": "backup.backup_vault_enabled | backup.retention_days"
     },
     {
@@ -281,8 +281,8 @@
         "MAS TRM 12.2",
         "SOC 2 CC8.1"
       ],
-      "status": "PASS",
-      "detail": "Azure Policy assignments active; Defender posture management enabled",
+      "status": "FAIL",
+      "detail": "Configuration drift gaps: no Azure Policy assignments configured; Defender for Cloud posture management not enabled",
       "config_attribute": "azure_policy.policy_assignments_enabled | azure_policy.defender_posture_enabled"
     },
     {
@@ -317,8 +317,8 @@
         "PCI DSS v4.0 Req 1",
         "SOC 2 CC6.6"
       ],
-      "status": "PASS",
-      "detail": "All GCS buckets have public access prevention enforced",
+      "status": "FAIL",
+      "detail": "Buckets with potential public access: ['gs-prod']",
       "config_attribute": "cloud_storage.buckets[].public_access_prevention"
     },
     {
@@ -373,8 +373,8 @@
         "PCI DSS v4.0 Req 12.3",
         "SOC 2 A1.2"
       ],
-      "status": "FAIL",
-      "detail": "Backup configuration failures: Cloud SQL automated backups not enabled; retention 0 days below 30-day minimum",
+      "status": "PASS",
+      "detail": "Cloud SQL automated backups active; retention >= 30 days",
       "config_attribute": "backup.automated_backups_enabled | backup.retention_days"
     },
     {
@@ -391,8 +391,8 @@
         "MAS TRM 12.2",
         "SOC 2 CC8.1"
       ],
-      "status": "PASS",
-      "detail": "Organisation Policy constraints active; Security Health Analytics enabled",
+      "status": "FAIL",
+      "detail": "Configuration drift gaps: Organisation Policy constraints not configured; Security Health Analytics drift detection not enabled",
       "config_attribute": "org_policy.constraints_enabled | org_policy.security_health_analytics_enabled"
     },
     {

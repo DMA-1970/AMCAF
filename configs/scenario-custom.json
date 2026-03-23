@@ -1,6 +1,6 @@
 {
   "scenario_id": "SC-CUSTOM",
-  "description": "Custom: S3 encryption disabled (AWS), KMS rotation disabled (all), Low log retention (AWS, Azure), Open SSH (AWS), No network segmentation (all), Backup disabled (all), Centralised findings disabled (all)",
+  "description": "Custom: MFA disabled (Azure), Dormant accounts (AWS), Weak TLS (Azure), Public bucket (GCP), No network segmentation (all), Permissive firewall (GCP), Drift detection disabled (all), Centralised findings disabled (all)",
   "expected_outcome": "Depends on selected toggles",
   "key_controls_tested": [
     "IAM-01",
@@ -39,6 +39,16 @@
           "username": "admin-user",
           "mfa_enabled": true,
           "last_used_days": 12
+        },
+        {
+          "username": "svc-legacy",
+          "mfa_enabled": true,
+          "last_used_days": 142
+        },
+        {
+          "username": "audit-reader",
+          "mfa_enabled": true,
+          "last_used_days": null
         }
       ]
     },
@@ -46,7 +56,7 @@
       "buckets": [
         {
           "name": "prod-data",
-          "default_encryption_enabled": false
+          "default_encryption_enabled": true
         }
       ]
     },
@@ -58,33 +68,17 @@
         }
       ],
       "log_file_validation_enabled": true,
-      "s3_object_lock_enabled": false,
-      "retention_days": 180
+      "s3_object_lock_enabled": true,
+      "retention_days": 365
     },
     "ec2": {
-      "security_groups": [
-        {
-          "group_id": "sg-custom",
-          "inbound_rules": [
-            {
-              "cidr": "0.0.0.0/0",
-              "port": 22,
-              "protocol": "tcp"
-            },
-            {
-              "cidr": "10.0.0.0/8",
-              "port": 443,
-              "protocol": "tcp"
-            }
-          ]
-        }
-      ]
+      "security_groups": []
     },
     "kms": {
       "keys": [
         {
           "key_id": "key-prod-01",
-          "rotation_enabled": false
+          "rotation_enabled": true
         }
       ]
     },
@@ -101,12 +95,12 @@
       ]
     },
     "backup": {
-      "backup_plan_enabled": false,
-      "retention_days": 0
+      "backup_plan_enabled": true,
+      "retention_days": 35
     },
     "aws_config": {
-      "config_rules_enabled": true,
-      "drift_detection_enabled": true
+      "config_rules_enabled": false,
+      "drift_detection_enabled": false
     },
     "security_hub": {
       "enabled": false
@@ -114,24 +108,24 @@
   },
   "azure": {
     "conditional_access": {
-      "mfa_policy_enabled": true
+      "mfa_policy_enabled": false
     },
     "storage_accounts": [
       {
         "name": "prodstore01",
-        "minimum_tls_version": "TLS1_2"
+        "minimum_tls_version": "TLS1_0"
       }
     ],
     "diagnostic_settings": {
       "activity_log_enabled": true,
-      "log_retention_days": 60,
+      "log_retention_days": 90,
       "immutable_storage_enabled": true
     },
     "key_vault": {
       "keys": [
         {
           "name": "prod-key-01",
-          "rotation_policy_enabled": false
+          "rotation_policy_enabled": true
         }
       ]
     },
@@ -149,12 +143,12 @@
       ]
     },
     "backup": {
-      "backup_vault_enabled": false,
-      "retention_days": 0
+      "backup_vault_enabled": true,
+      "retention_days": 35
     },
     "azure_policy": {
-      "policy_assignments_enabled": true,
-      "defender_posture_enabled": true
+      "policy_assignments_enabled": false,
+      "defender_posture_enabled": false
     }
   },
   "gcp": {
@@ -162,8 +156,8 @@
       "buckets": [
         {
           "name": "gs-prod",
-          "public_access_prevention": "enforced",
-          "uniform_bucket_level_access": true
+          "public_access_prevention": "unspecified",
+          "uniform_bucket_level_access": false
         }
       ]
     },
@@ -179,13 +173,24 @@
       ]
     },
     "vpc": {
-      "firewall_rules": []
+      "firewall_rules": [
+        {
+          "name": "allow-all-inbound",
+          "source_ranges": [
+            "0.0.0.0/0"
+          ],
+          "action": "allow",
+          "ports": [
+            "all"
+          ]
+        }
+      ]
     },
     "cloud_kms": {
       "keys": [
         {
           "name": "prod-key-01",
-          "rotation_schedule_enabled": false
+          "rotation_schedule_enabled": true
         }
       ]
     },
@@ -203,12 +208,12 @@
       ]
     },
     "backup": {
-      "automated_backups_enabled": false,
-      "retention_days": 0
+      "automated_backups_enabled": true,
+      "retention_days": 35
     },
     "org_policy": {
-      "constraints_enabled": true,
-      "security_health_analytics_enabled": true
+      "constraints_enabled": false,
+      "security_health_analytics_enabled": false
     }
   }
 }
