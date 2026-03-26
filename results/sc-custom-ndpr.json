@@ -1,11 +1,11 @@
 {
   "report_metadata": {
     "framework": "AMCAF v1.0",
-    "generated_at": "2026-03-23T11:24:57.074097Z",
+    "generated_at": "2026-03-26T19:04:50.778725Z",
     "total_checks": 4,
-    "passed": 1,
-    "failed": 3,
-    "compliance_rate": "25.0%",
+    "passed": 0,
+    "failed": 4,
+    "compliance_rate": "0.0%",
     "framework_filter": "NDPR"
   },
   "findings": [
@@ -41,8 +41,8 @@
         "PCI DSS v4.0 Req 4",
         "SOC 2 CC6.7"
       ],
-      "status": "PASS",
-      "detail": "All storage accounts enforce minimum TLS 1.2",
+      "status": "FAIL",
+      "detail": "Weak TLS (<1.2) on storage accounts: ['prodstore01']",
       "config_attribute": "storage_accounts[].minimum_tls_version"
     },
     {
