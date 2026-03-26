@@ -1,11 +1,11 @@
 {
   "report_metadata": {
     "framework": "AMCAF v1.0",
-    "generated_at": "2026-03-22T20:18:37.587183Z",
+    "generated_at": "2026-03-26T19:08:50.757517Z",
     "total_checks": 39,
-    "passed": 17,
-    "failed": 22,
-    "compliance_rate": "43.6%"
+    "passed": 6,
+    "failed": 33,
+    "compliance_rate": "15.4%"
   },
   "findings": [
     {
@@ -22,8 +22,8 @@
         "PCI DSS v4.0 Req 7",
         "SOC 2 CC6.3"
       ],
-      "status": "PASS",
-      "detail": "IAM policies comply with least-privilege requirement",
+      "status": "FAIL",
+      "detail": "Wildcard (*) action found in IAM policy",
       "config_attribute": "iam.policies[].actions"
     },
     {
@@ -58,8 +58,8 @@
         "PCI DSS v4.0 Req 8.6",
         "SOC 2 CC6.2"
       ],
-      "status": "PASS",
-      "detail": "No dormant accounts found; all users active within 90 days",
+      "status": "FAIL",
+      "detail": "Dormant or unused accounts detected: ['svc-legacy', 'audit-reader']",
       "config_attribute": "iam.users[].last_used_days"
     },
     {
@@ -111,8 +111,8 @@
         "PCI DSS v4.0 Req 10",
         "SOC 2 CC7.2"
       ],
-      "status": "PASS",
-      "detail": "CloudTrail logging active across all configured trails",
+      "status": "FAIL",
+      "detail": "CloudTrail logging inactive for: ['mgmt-trail']",
       "config_attribute": "cloudtrail.trails[].is_logging"
     },
     {
@@ -130,8 +130,8 @@
         "PCI DSS v4.0 Req 10.7",
         "SOC 2 CC7.2"
       ],
-      "status": "FAIL",
-      "detail": "Log integrity/retention failures: S3 Object Lock not configured on log bucket; retention 180 days below 365-day minimum",
+      "status": "PASS",
+      "detail": "Log file validation enabled; S3 Object Lock configured; retention >= 365 days",
       "config_attribute": "cloudtrail.log_file_validation_enabled | cloudtrail.s3_object_lock_enabled | cloudtrail.retention_days"
     },
     {
@@ -149,8 +149,8 @@
         "PCI DSS v4.0 Req 10.6",
         "SOC 2 CC7.3"
       ],
-      "status": "PASS",
-      "detail": "CloudWatch alarms and Security Hub enabled for real-time alerting",
+      "status": "FAIL",
+      "detail": "Real-time alerting gaps: CloudWatch metric alarms not configured; AWS Security Hub not enabled",
       "config_attribute": "monitoring.cloudwatch_alarms_enabled | monitoring.security_hub_enabled"
     },
     {
@@ -238,8 +238,8 @@
         "MAS TRM 12.2",
         "SOC 2 CC8.1"
       ],
-      "status": "PASS",
-      "detail": "AWS Config rules active; CloudFormation drift detection enabled",
+      "status": "FAIL",
+      "detail": "Configuration drift gaps: AWS Config rules not enabled; CloudFormation drift detection not enabled",
       "config_attribute": "aws_config.config_rules_enabled | aws_config.drift_detection_enabled"
     },
     {
@@ -274,8 +274,8 @@
         "PCI DSS v4.0 Req 8",
         "SOC 2 CC6.1"
       ],
-      "status": "PASS",
-      "detail": "Conditional Access MFA policy is active",
+      "status": "FAIL",
+      "detail": "No active Conditional Access policy enforcing MFA",
       "config_attribute": "conditional_access.mfa_policy_enabled"
     },
     {
@@ -292,8 +292,8 @@
         "PCI DSS v4.0 Req 4",
         "SOC 2 CC6.7"
       ],
-      "status": "PASS",
-      "detail": "All storage accounts enforce minimum TLS 1.2",
+      "status": "FAIL",
+      "detail": "Weak TLS (<1.2) on storage accounts: ['prodstore01']",
       "config_attribute": "storage_accounts[].minimum_tls_version"
     },
     {
@@ -327,8 +327,8 @@
         "PCI DSS v4.0 Req 10",
         "SOC 2 CC7.2"
       ],
-      "status": "PASS",
-      "detail": "Activity Log diagnostic settings configured",
+      "status": "FAIL",
+      "detail": "Azure Activity Log not routed to Log Analytics Workspace",
       "config_attribute": "diagnostic_settings.activity_log_enabled"
     },
     {
@@ -346,8 +346,8 @@
         "PCI DSS v4.0 Req 10.7",
         "SOC 2 CC7.2"
       ],
-      "status": "FAIL",
-      "detail": "Log retention/integrity failures: Log Analytics retention 60 days below 90-day minimum",
+      "status": "PASS",
+      "detail": "Log Analytics retention >= 90 days; immutable storage enabled",
       "config_attribute": "diagnostic_settings.log_retention_days | diagnostic_settings.immutable_storage_enabled"
     },
     {
@@ -365,8 +365,8 @@
         "PCI DSS v4.0 Req 10.6",
         "SOC 2 CC7.3"
       ],
-      "status": "PASS",
-      "detail": "Defender for Cloud alerts active; Sentinel integration configured",
+      "status": "FAIL",
+      "detail": "Real-time alerting gaps: Defender for Cloud alerts not enabled; Microsoft Sentinel integration not configured",
       "config_attribute": "defender_for_cloud.alerts_enabled | defender_for_cloud.sentinel_integration"
     },
     {
@@ -419,8 +419,8 @@
         "MAS TRM 12.2",
         "SOC 2 CC8.1"
       ],
-      "status": "PASS",
-      "detail": "Azure Policy assignments active; Defender posture management enabled",
+      "status": "FAIL",
+      "detail": "Configuration drift gaps: no Azure Policy assignments configured; Defender for Cloud posture management not enabled",
       "config_attribute": "azure_policy.policy_assignments_enabled | azure_policy.defender_posture_enabled"
     },
     {
@@ -473,8 +473,8 @@
         "PCI DSS v4.0 Req 10",
         "SOC 2 CC7.2"
       ],
-      "status": "PASS",
-      "detail": "Admin Activity audit logging is enabled",
+      "status": "FAIL",
+      "detail": "Admin Activity audit logs are disabled or not configured",
       "config_attribute": "audit_logs.admin_activity_enabled"
     },
     {
@@ -544,8 +544,8 @@
         "PCI DSS v4.0 Req 10.6",
         "SOC 2 CC7.3"
       ],
-      "status": "PASS",
-      "detail": "Security Command Center findings and alerting policies active",
+      "status": "FAIL",
+      "detail": "Real-time alerting gaps: Security Command Center findings not enabled; Cloud Monitoring alerting policies not configured",
       "config_attribute": "security_command_center.findings_enabled | security_command_center.alerting_policies_enabled"
     },
     {
@@ -598,8 +598,8 @@
         "MAS TRM 12.2",
         "SOC 2 CC8.1"
       ],
-      "status": "PASS",
-      "detail": "Organisation Policy constraints active; Security Health Analytics enabled",
+      "status": "FAIL",
+      "detail": "Configuration drift gaps: Organisation Policy constraints not configured; Security Health Analytics drift detection not enabled",
       "config_attribute": "org_policy.constraints_enabled | org_policy.security_health_analytics_enabled"
     },
     {
