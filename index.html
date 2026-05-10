@@ -249,6 +249,14 @@ function tog(id){
 async function loadMeta(){
   try{
     const m=await get(BASE+'meta.json');
+    let liveEntra = null;
+
+try {
+    liveEntra = await get(BASE + 'live-entra-summary.json');
+    console.log('Loaded live Entra assessment');
+} catch (e) {
+    console.log('No live Entra assessment found');
+}
     document.getElementById('run-bar').style.display='flex';
     document.getElementById('lr-time').textContent=new Date(m.last_run).toLocaleString();
     document.getElementById('lr-sc').textContent=m.scenario;
@@ -308,10 +316,19 @@ async function loadGroup(ids,targetId,isCustom){
     try{ res[i]=await get(BASE+id+'.json'); }
     catch(_){ errs.push(id); res[i]=null; }
   }));
+
+  // Add live Entra assessment into dashboard data
+  try {
+    const liveEntra = await get(BASE + 'live-entra-summary.json');
+    res.push(liveEntra);
+  } catch (_) {
+    console.log('No live Entra assessment found');
+  }
+
   const valid=res.filter(Boolean);
   if(!valid.length){
     document.getElementById(targetId).innerHTML=
-      '<div class="msg">No results yet — run a simulation to generate them.</div>';
+      `<div class="msg">No results yet — run a simulation to generate them.</div>`;
     return {valid:[],errs};
   }
   document.getElementById(targetId).innerHTML=
