@@ -311,7 +311,45 @@ function card(data,scId,uid,isCustom){
     </div>`;
 }
 
-async function loadGroup(ids,targetId,isCustom){
+async function loadGroup(ids,targetId,isCustom)async function loadLiveAssessments(){
+  try{
+    const live = await get(BASE+'live-entra-summary.json');
+    const findings = live.findings || [];
+    const pass = findings.filter(f=>f.status==='PASS').length;
+    const fail = findings.filter(f=>f.status==='FAIL').length;
+    const rate = findings.length ? ((pass/findings.length)*100).toFixed(1) : '0.0';
+
+    document.getElementById('live-assessments').innerHTML = `
+      <div class="card scenario">
+        <div class="scenario-head">
+          <strong>LIVE-ENTRA — Microsoft Entra Identity Governance</strong>
+          <span>
+            <span class="pill ok">${pass} pass</span>
+            <span class="pill fail">${fail} fail</span>
+            <span class="pill">${rate}%</span>
+          </span>
+        </div>
+        <div class="card-body">
+          <table>
+            <thead><tr><th>Control</th><th>Provider</th><th>Status</th><th>Evidence</th></tr></thead>
+            <tbody>
+              ${findings.map(f=>`
+                <tr>
+                  <td>${f.control_id}</td>
+                  <td>${f.provider}</td>
+                  <td>${f.status}</td>
+                  <td>${f.detail}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>`;
+  }catch(e){
+    document.getElementById('live-assessments').innerHTML =
+      `<div class="msg">No live governance assessment found yet.</div>`;
+  }
+}{
 async function loadLiveAssessments(){
   try{
     const live = await get(BASE+'live-entra-summary.json');
