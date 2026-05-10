@@ -127,7 +127,8 @@ footer{margin-top:28px;font-size:11px;color:#484f58;text-align:center;padding-bo
   <span><span class="dot fail"></span>FAIL — misconfiguration detected</span>
   <span><span class="leg-org">ORG</span> — organisational-level control</span>
 </div>
-
+<div class="section-label">Live governance assessments</div>
+<div id="live-assessments"></div>
 <div class="section-label">Standard scenarios — SC-01 to SC-06</div>
 <div id="grid-standard" class="grid">
   <div class="msg">Loading results…</div>
@@ -311,6 +312,53 @@ function card(data,scId,uid,isCustom){
 }
 
 async function loadGroup(ids,targetId,isCustom){
+async function loadLiveAssessments(){
+  try{
+    const live = await get(BASE+'live-entra-summary.json');
+    const meta = live.report_metadata || {};
+    const findings = live.findings || [];
+    const pass = findings.filter(f=>f.status==='PASS').length;
+    const fail = findings.filter(f=>f.status==='FAIL').length;
+    const rate = findings.length ? ((pass/findings.length)*100).toFixed(1) : '0.0';
+
+    document.getElementById('live-assessments').innerHTML = `
+      <div class="card scenario">
+        <div class="scenario-head">
+          <strong>LIVE-ENTRA — Microsoft Entra Identity Governance</strong>
+          <span>
+            <span class="pill ok">${pass} pass</span>
+            <span class="pill fail">${fail} fail</span>
+            <span class="pill">${rate}%</span>
+          </span>
+        </div>
+        <div class="card-body">
+          <table>
+            <thead>
+              <tr>
+                <th>Control</th>
+                <th>Provider</th>
+                <th>Status</th>
+                <th>Evidence</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${findings.map(f=>`
+                <tr>
+                  <td>${f.control_id}</td>
+                  <td>${f.provider}</td>
+                  <td>${f.status}</td>
+                  <td>${f.detail}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>`;
+  }catch(e){
+    document.getElementById('live-assessments').innerHTML =
+      `<div class="msg">No live governance assessment found yet.</div>`;
+  }
+}
   const res=[],errs=[];
   await Promise.all(ids.map(async(id,i)=>{
     try{ res[i]=await get(BASE+id+'.json'); }
@@ -340,6 +388,7 @@ async function init(){
   buildFrameworkPanel();
   await loadMeta();
   const {valid:std,errs:stdErr} = await loadGroup(STANDARD_IDS,'grid-standard',false);
+  loadLiveAssessments();
   const {valid:ext,errs:extErr} = await loadGroup(EXTENDED_IDS,'grid-extended',false);
   try{
     const customData=await get(BASE+CUSTOM_ID+'.json');
