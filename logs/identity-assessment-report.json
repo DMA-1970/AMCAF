@@ -1,0 +1,91 @@
+﻿{
+    "assessmentName":  "AMCAF Identity Governance Assessment",
+    "tenantId":  "d8925809-1e3e-4f07-bb35-fce3eb3619d4",
+    "assessmentDateUtc":  "2026-05-10T17:09:12Z",
+    "overallScore":  50,
+    "summary":  {
+                    "unknownControls":  1,
+                    "totalUsers":  1,
+                    "failedControls":  2,
+                    "conditionalAccessPolicies":  1,
+                    "passedControls":  2,
+                    "enterpriseApplications":  1,
+                    "partialControls":  0,
+                    "appRegistrations":  1,
+                    "disabledUsers":  0,
+                    "guestUsers":  0,
+                    "groups":  1,
+                    "globalAdministrators":  0,
+                    "enabledUsers":  0
+                },
+    "findings":  [
+                     {
+                         "controlId":  "ID-001",
+                         "controlName":  "MFA registration coverage",
+                         "status":  "Fail",
+                         "risk":  "High",
+                         "evidence":  "0 of 0 enabled users are registered for MFA. Coverage: %.",
+                         "recommendation":  "Increase MFA registration coverage and enforce phishing-resistant authentication where possible.",
+                         "regulatoryMapping":  "NIST IA-2, ISO 27001 access control, FCA operational resilience, GDPR Article 32"
+                     },
+                     {
+                         "controlId":  "ID-002",
+                         "controlName":  "Conditional Access policy enforcement",
+                         "status":  "Fail",
+                         "risk":  "High",
+                         "evidence":  "1 Conditional Access policies found. 0 are enabled.",
+                         "recommendation":  "Ensure baseline Conditional Access policies are enabled for administrators, high-risk users, unmanaged devices and external access.",
+                         "regulatoryMapping":  "NIST AC-2, NIST IA-2, ISO 27001 access control, DORA ICT risk management"
+                     },
+                     {
+                         "controlId":  "ID-003",
+                         "controlName":  "Global Administrator exposure",
+                         "status":  "Unknown",
+                         "risk":  "Medium",
+                         "evidence":  "0 Global Administrator account(s) identified.",
+                         "recommendation":  "Limit Global Administrator assignments, use Privileged Identity Management, and maintain break-glass accounts with strict monitoring.",
+                         "regulatoryMapping":  "NIST AC-6, ISO 27001 privileged access management, FCA operational resilience"
+                     },
+                     {
+                         "controlId":  "ID-004",
+                         "controlName":  "Guest account exposure",
+                         "status":  "Pass",
+                         "risk":  "Low",
+                         "evidence":  "0 guest accounts found out of 1 total users. Guest ratio: 0%.",
+                         "recommendation":  "Review guest users regularly, enforce access reviews, apply Conditional Access to external users and remove stale B2B accounts.",
+                         "regulatoryMapping":  "NIST AC-2, ISO 27001 supplier/access control, GDPR Article 32"
+                     },
+                     {
+                         "controlId":  "ID-005",
+                         "controlName":  "Application registration inventory",
+                         "status":  "Pass",
+                         "risk":  "Low",
+                         "evidence":  "1 app registrations and 1 enterprise applications identified.",
+                         "recommendation":  "Review app ownership, consent permissions, credential expiry and unused enterprise applications.",
+                         "regulatoryMapping":  "NIST CM-8, ISO 27001 asset management, DORA third-party ICT risk"
+                     },
+                     {
+                         "controlId":  "ID-006",
+                         "controlName":  "Disabled account hygiene",
+                         "status":  "Informational",
+                         "risk":  "Low",
+                         "evidence":  "0 disabled user accounts identified.",
+                         "recommendation":  "Review disabled accounts and remove those no longer required for audit, legal hold or operational reasons.",
+                         "regulatoryMapping":  "NIST AC-2, ISO 27001 identity lifecycle management"
+                     }
+                 ],
+    "evidence":  {
+                     "guestUsers":  {
+
+                                    },
+                     "globalAdministrators":  {
+
+                                              },
+                     "appRegistrations":  {
+
+                                          },
+                     "conditionalAccessPolicies":  {
+
+                                                   }
+                 }
+}

@@ -1,0 +1,40 @@
+{
+    "assessment_name": "AMCAF Entra Identity Governance Assessment",
+    "assessment_timestamp_utc": "2026-05-10T20:13:17.042378",
+    "overall_score": 75,
+    "summary": {
+        "total_users": 22,
+        "enabled_users": 0,
+        "guest_users": 0,
+        "groups": 18,
+        "application_registrations": 7,
+        "conditional_access_policies": 8,
+        "enabled_conditional_access_policies": 8
+    },
+    "findings": [
+        {
+            "control": "Conditional Access Enforcement",
+            "status": "PASS",
+            "risk": "LOW",
+            "evidence": "8 enabled Conditional Access policies identified.",
+            "recommendation": "Implement baseline Conditional Access policies for administrators, MFA and unmanaged devices.",
+            "mapping": "NIST IA-2 / ISO27001 Access Control / DORA"
+        },
+        {
+            "control": "Guest User Exposure",
+            "status": "PASS",
+            "risk": "LOW",
+            "evidence": "0 guest users identified.",
+            "recommendation": "Review B2B guest access regularly and implement lifecycle governance.",
+            "mapping": "NIST AC-2 / GDPR Article 32"
+        },
+        {
+            "control": "Application Registration Inventory",
+            "status": "PASS",
+            "risk": "LOW",
+            "evidence": "7 application registrations identified.",
+            "recommendation": "Review application ownership, permissions and credential expiry.",
+            "mapping": "NIST CM-8 / ISO27001 Asset Management"
+        }
+    ]
+}
