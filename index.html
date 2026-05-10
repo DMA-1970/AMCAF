@@ -390,6 +390,7 @@ async function init(){
   const {valid:std,errs:stdErr} = await loadGroup(STANDARD_IDS,'grid-standard',false);
   loadLiveAssessments();
   const {valid:ext,errs:extErr} = await loadGroup(EXTENDED_IDS,'grid-extended',false);
+  loadLiveAssessments();
   try{
     const customData=await get(BASE+CUSTOM_ID+'.json');
     document.getElementById('custom-label').style.display='block';
