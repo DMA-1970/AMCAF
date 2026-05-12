@@ -1,55 +1,17 @@
 [
   {
-    "run_id": "entra-20260512-220502",
-    "timestamp": "2026-05-12T22:05:02.117861+00:00",
-    "scenario": "LIVE-ENTRA",
+    "run_number": 28,
+    "timestamp": "2026-05-12T22:36:05.048761Z",
     "triggered_by": "DMA-1970",
-    "passed": 3,
-    "failed": 0,
-    "total_checks": 3,
-    "compliance_rate": 100.0,
-    "run_url": "#",
-    "source": "live-entra-summary.json",
-    "type": "live-governance-validation"
-  },
-  {
-    "run_id": "entra-20260512-220424",
-    "timestamp": "2026-05-12T22:04:24.440332+00:00",
-    "scenario": "LIVE-ENTRA",
-    "triggered_by": "DMA-1970",
-    "passed": 3,
-    "failed": 0,
-    "total_checks": 3,
-    "compliance_rate": 100.0,
-    "run_url": "#",
-    "source": "live-entra-summary.json",
-    "type": "live-governance-validation"
-  },
-  {
-    "run_id": "entra-20260512-220140",
-    "timestamp": "2026-05-12T22:01:40.901400+00:00",
-    "scenario": "LIVE-ENTRA",
-    "triggered_by": "DMA-1970",
-    "passed": 3,
-    "failed": 0,
-    "total_checks": 3,
-    "compliance_rate": 100.0,
-    "run_url": "#",
-    "source": "live-entra-summary.json",
-    "type": "live-governance-validation"
-  },
-  {
-    "run_id": "entra-20260512-215257",
-    "timestamp": "2026-05-12T21:52:57.172827+00:00",
-    "scenario": "LIVE-ENTRA",
-    "triggered_by": "DMA-1970",
-    "passed": 3,
-    "failed": 0,
-    "total_checks": 3,
-    "compliance_rate": 100.0,
-    "run_url": "#",
-    "source": "live-entra-summary.json",
-    "type": "live-governance-validation"
+    "scenario": "ALL",
+    "run_url": "https://github.com/DMA-1970/AMCAF/actions/runs/25766256112",
+    "file": "run-0028-2026-05-12T223605048761Z.json",
+    "summary": {
+      "total_checks": 351,
+      "passed": 280,
+      "failed": 71,
+      "compliance_rate": "79.8%"
+    }
   },
   {
     "run_number": 27,
