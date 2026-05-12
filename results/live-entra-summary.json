@@ -1,7 +1,7 @@
 {
   "report_metadata": {
     "framework": "AMCAF v1.0",
-    "generated_at": "2026-05-12T23:34:12.049449+00:00",
+    "generated_at": "2026-05-12T23:40:41.625595+00:00",
     "scenario": "LIVE-ENTRA",
     "source": "Microsoft Graph API",
     "total_checks": 3,
