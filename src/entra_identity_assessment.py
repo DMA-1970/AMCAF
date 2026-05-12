@@ -1,6 +1,6 @@
 from graph_connector import GraphConnector
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 
 graph = GraphConnector()
 
@@ -11,7 +11,7 @@ print("Connected to Microsoft Graph")
 # -------------------------------------------------
 
 users = graph.graph_get(
-    "https://graph.microsoft.com/v1.0/users?$top=999"
+    "https://graph.microsoft.com/v1.0/users?$select=id,displayName,userPrincipalName,userType,accountEnabled&$top=999"
 )
 
 groups = graph.graph_get(
@@ -29,8 +29,21 @@ conditional_access = graph.graph_get(
 # -------------------------------------------------
 # Process collected data
 # -------------------------------------------------
-
 all_users = users.get("value", [])
+
+print("")
+print("DEBUG USERS")
+print("================================")
+
+for user in all_users[:10]:
+    print({
+        "displayName": user.get("displayName"),
+        "userType": user.get("userType"),
+        "userPrincipalName": user.get("userPrincipalName")
+    })
+
+print("================================")
+print("")
 all_groups = groups.get("value", [])
 all_apps = applications.get("value", [])
 all_ca = conditional_access.get("value", [])
@@ -42,12 +55,12 @@ enabled_users = [
 
 guest_users = [
     user for user in all_users
-    if user.get("userType") == "Guest"
+    if str(user.get("userType", "")).lower() == "guest"
 ]
 
 enabled_ca = [
     policy for policy in all_ca
-    if policy.get("state") == "enabled"
+    if str(policy.get("state", "")).lower() == "enabled"
 ]
 
 # -------------------------------------------------
@@ -59,7 +72,7 @@ score = 0
 if len(enabled_ca) > 0:
     score += 25
 
-if len(guest_users) < 10:
+if len(guest_users) == 0:
     score += 25
 
 if len(all_apps) < 50:
@@ -86,14 +99,16 @@ findings.append({
     "mapping": "NIST IA-2 / ISO27001 Access Control / DORA"
 })
 
+guest_count = len(guest_users)
+
 findings.append({
     "control": "Guest User Exposure",
-    "status": "PASS" if len(guest_users) < 10 else "REVIEW",
-    "risk": "LOW" if len(guest_users) < 10 else "MEDIUM",
-    "evidence": f"{len(guest_users)} guest users identified.",
+    "status": "PASS" if guest_count == 0 else "FAIL",
+    "risk": "LOW" if guest_count == 0 else "MEDIUM",
+    "evidence": f"{guest_count} guest users identified.",
     "recommendation": (
-        "Review B2B guest access regularly and "
-        "implement lifecycle governance."
+        "Review B2B guest access regularly, enforce Conditional Access for external users, "
+        "and implement lifecycle governance or access reviews."
     ),
     "mapping": "NIST AC-2 / GDPR Article 32"
 })
@@ -116,7 +131,7 @@ findings.append({
 
 report = {
     "assessment_name": "AMCAF Entra Identity Governance Assessment",
-    "assessment_timestamp_utc": datetime.utcnow().isoformat(),
+    "assessment_timestamp_utc": datetime.now(timezone.utc).isoformat(),
 
     "overall_score": score,
 
@@ -139,7 +154,7 @@ report = {
 
 output_file = "results/entra_assessment.json"
 
-with open(output_file, "w") as file:
+with open(output_file, "w", encoding="utf-8") as file:
     json.dump(report, file, indent=4)
 
 # -------------------------------------------------
@@ -161,4 +176,3 @@ for finding in findings:
     print(f"Status : {finding['status']}")
     print(f"Risk   : {finding['risk']}")
     print(f"Evidence: {finding['evidence']}")
-    

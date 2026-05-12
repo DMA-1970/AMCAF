@@ -1,11 +1,11 @@
 {
     "assessment_name": "AMCAF Entra Identity Governance Assessment",
-    "assessment_timestamp_utc": "2026-05-12T23:18:01.364088",
+    "assessment_timestamp_utc": "2026-05-12T23:33:02.087696+00:00",
     "overall_score": 75,
     "summary": {
         "total_users": 24,
-        "enabled_users": 0,
-        "guest_users": 0,
+        "enabled_users": 24,
+        "guest_users": 2,
         "groups": 18,
         "application_registrations": 7,
         "conditional_access_policies": 8,
@@ -22,10 +22,10 @@
         },
         {
             "control": "Guest User Exposure",
-            "status": "PASS",
-            "risk": "LOW",
-            "evidence": "0 guest users identified.",
-            "recommendation": "Review B2B guest access regularly and implement lifecycle governance.",
+            "status": "FAIL",
+            "risk": "MEDIUM",
+            "evidence": "2 guest users identified.",
+            "recommendation": "Review B2B guest access regularly, enforce Conditional Access for external users, and implement lifecycle governance or access reviews.",
             "mapping": "NIST AC-2 / GDPR Article 32"
         },
         {

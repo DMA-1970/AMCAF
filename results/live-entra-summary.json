@@ -1,13 +1,13 @@
 {
   "report_metadata": {
     "framework": "AMCAF v1.0",
-    "generated_at": "2026-05-12T22:59:51.193035+00:00",
+    "generated_at": "2026-05-12T23:34:12.049449+00:00",
     "scenario": "LIVE-ENTRA",
     "source": "Microsoft Graph API",
     "total_checks": 3,
-    "passed": 3,
-    "failed": 0,
-    "compliance_rate": "100.0%"
+    "passed": 2,
+    "failed": 1,
+    "compliance_rate": "66.7%"
   },
   "findings": [
     {
@@ -38,8 +38,8 @@
         "NIST CSF PR.AC",
         "UK GDPR Art. 32"
       ],
-      "status": "PASS",
-      "detail": "0 guest users identified.",
+      "status": "FAIL",
+      "detail": "2 guest users identified.",
       "config_attribute": "NIST AC-2 / GDPR Article 32"
     },
     {

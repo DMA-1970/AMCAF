@@ -1,5 +1,18 @@
 [
   {
+    "run_id": "entra-20260512-233423",
+    "timestamp": "2026-05-12T23:34:23.161013+00:00",
+    "scenario": "LIVE-ENTRA",
+    "triggered_by": "DMA-1970",
+    "passed": 2,
+    "failed": 1,
+    "total_checks": 3,
+    "compliance_rate": 66.7,
+    "run_url": "#",
+    "source": "live-entra-summary.json",
+    "type": "live-governance-validation"
+  },
+  {
     "run_id": "entra-20260512-225951",
     "timestamp": "2026-05-12T22:59:51.242785+00:00",
     "scenario": "LIVE-ENTRA",
