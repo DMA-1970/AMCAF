@@ -35,6 +35,13 @@ header{display:flex;align-items:flex-start;justify-content:space-between;flex-wr
 
 .section-label{font-size:11px;font-weight:500;color:#8b949e;text-transform:uppercase;letter-spacing:.06em;margin:20px 0 8px}
 
+.history-grid{display:grid;grid-template-columns:2fr 1fr;gap:10px;margin-bottom:10px}
+.history-panel{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:14px 16px}
+.history-title{font-size:13px;font-weight:500;color:#f0f6fc;margin-bottom:8px}
+.trend-line{height:120px;display:flex;align-items:flex-end;gap:6px;border-top:1px solid #30363d;padding-top:10px}
+.trend-bar{flex:1;background:#238636;border-radius:4px 4px 0 0;min-height:4px}
+.trend-note{font-size:11px;color:#8b949e;margin-top:8px}
+
 .fw-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px;margin-bottom:8px}
 .fw-card{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:14px 16px}
 .fw-name{font-size:13px;font-weight:500;color:#f0f6fc;margin-bottom:2px}
@@ -102,6 +109,10 @@ footer{margin-top:28px;font-size:11px;color:#484f58;text-align:center;padding-bo
   </div>
 
   <div class="btn-row">
+    <a class="btn btn-ghost" href="aws-results.html">AWS governance</a>
+    <a class="btn btn-ghost" href="entra-results.html">Azure governance</a>
+    <a class="btn btn-ghost" href="gcp-results.html">GCP governance</a>
+    <span style="width:1px;height:20px;background:#30363d;margin:0 4px"></span>
     <a class="btn btn-ghost" href="history.html">Run history</a>
     <a class="btn btn-green" href="https://github.com/DMA-1970/AMCAF/actions/workflows/run-simulation.yml" target="_blank" rel="noopener">Run simulation</a>
   </div>
@@ -114,6 +125,24 @@ footer{margin-top:28px;font-size:11px;color:#484f58;text-align:center;padding-bo
 
 <div id="err"></div>
 <div id="meta" class="meta-bar"></div>
+
+<div class="section-label">Governance history</div>
+<div class="history-grid">
+  <div class="history-panel">
+    <div class="history-title">Compliance trend</div>
+    <div id="history-chart" class="trend-line">
+      <div class="msg">Loading history…</div>
+    </div>
+    <div id="history-note" class="trend-note"></div>
+  </div>
+
+  <div class="history-panel">
+    <div class="history-title">Latest movement</div>
+    <div id="history-movement" class="trend-note">Loading movement…</div>
+  </div>
+</div>
+
+<div id="history-table" class="grid"></div>
 
 <div class="section-label">Executive governance summary</div>
 
@@ -189,6 +218,8 @@ footer{margin-top:28px;font-size:11px;color:#484f58;text-align:center;padding-bo
 
 <script>
 const BASE = 'https://raw.githubusercontent.com/DMA-1970/AMCAF/main/results/';
+const HISTORY_BASE = BASE + 'history/';
+
 const STANDARD_IDS = ['sc-01','sc-02','sc-03','sc-04','sc-05','sc-06'];
 const EXTENDED_IDS = ['sc-07','sc-08'];
 const CUSTOM_ID = 'sc-custom';
@@ -240,6 +271,32 @@ async function get(url){
   return response.json();
 }
 
+function normaliseHistory(history){
+  const runs = Array.isArray(history) ? history : (history && Array.isArray(history.runs) ? history.runs : []);
+  return runs.slice().sort((a,b) => new Date(b.timestamp || b.started_at || 0) - new Date(a.timestamp || a.started_at || 0));
+}
+
+function runRate(run){
+  const value = run.compliance_rate ?? run.compliance ?? run.rate ?? 0;
+  return Number(String(value).replace('%','')) || 0;
+}
+
+function runPassed(run){
+  return run.passed ?? run.pass ?? 0;
+}
+
+function runFailed(run){
+  return run.failed ?? run.fail ?? 0;
+}
+
+function runTotal(run){
+  return run.total_checks ?? run.total ?? (Number(runPassed(run)) + Number(runFailed(run)));
+}
+
+function runId(run){
+  return run.run_id ?? run.id ?? run.number ?? 'N/A';
+}
+
 function bdg(cls,text){
   return `<span class="badge ${cls}">${text}</span>`;
 }
@@ -263,21 +320,28 @@ function tog(id){
 
 async function loadMeta(){
   try{
-    const m = await get(BASE + 'meta.json');
+    const history = await get(HISTORY_BASE + 'history.json');
+    const runs = normaliseHistory(history);
+    const latest = runs[0];
+
+    if(!latest) throw new Error('No history entries found');
+
     document.getElementById('run-bar').style.display = 'flex';
-    document.getElementById('lr-time').textContent = new Date(m.last_run).toLocaleString();
-    document.getElementById('lr-sc').textContent = m.scenario || '—';
-    document.getElementById('lr-by').textContent = m.triggered_by || '—';
-    document.getElementById('lr-link').href = m.run_url || '#';
-  }catch(_){
-    console.log('No meta.json found');
+    document.getElementById('lr-time').textContent =
+      latest.timestamp ? new Date(latest.timestamp).toLocaleString() : '—';
+    document.getElementById('lr-sc').textContent = latest.scenario || latest.type || '—';
+    document.getElementById('lr-by').textContent = latest.triggered_by || latest.by || '—';
+    document.getElementById('lr-link').href = latest.run_url || latest.log_url || '#';
+
+  }catch(e){
+    console.log('No history file found for latest run', e);
   }
 }
 
 function metaBar(datasets){
-  const total = datasets.reduce((s,d) => s + Number(d.report_metadata.total_checks || 0), 0);
-  const passed = datasets.reduce((s,d) => s + Number(d.report_metadata.passed || 0), 0);
-  const failed = datasets.reduce((s,d) => s + Number(d.report_metadata.failed || 0), 0);
+  const total = datasets.reduce((s,d) => s + Number(d.report_metadata?.total_checks || 0), 0);
+  const passed = datasets.reduce((s,d) => s + Number(d.report_metadata?.passed || 0), 0);
+  const failed = datasets.reduce((s,d) => s + Number(d.report_metadata?.failed || 0), 0);
   const rate = total ? ((passed / total) * 100).toFixed(1) : '0.0';
 
   document.getElementById('meta').innerHTML = `
@@ -337,13 +401,90 @@ function card(data,scId,uid,isCustom=false){
   `;
 }
 
+async function loadHistory(){
+  try{
+    const history = await get(HISTORY_BASE + 'history.json');
+    const runs = normaliseHistory(history);
+
+    if(!runs.length){
+      document.getElementById('history-chart').innerHTML =
+        `<div class="msg">No historical runs recorded yet.</div>`;
+      document.getElementById('history-movement').textContent = 'No movement available.';
+      return;
+    }
+
+    const recentDesc = runs.slice(0,10);
+    const recentAsc = recentDesc.slice().reverse();
+
+    document.getElementById('history-chart').innerHTML = recentAsc.map(run => {
+      const rate = runRate(run);
+      return `<div class="trend-bar" title="${rate}%" style="height:${Math.max(rate,4)}%"></div>`;
+    }).join('');
+
+    const latest = recentDesc[0];
+    const previous = recentDesc[1];
+
+    let movement = 'First recorded governance run.';
+    if(previous){
+      const diff = runRate(latest) - runRate(previous);
+      movement = diff > 0
+        ? `▲ Compliance improved by ${diff.toFixed(1)} percentage points.`
+        : diff < 0
+          ? `▼ Compliance declined by ${Math.abs(diff).toFixed(1)} percentage points.`
+          : 'Compliance unchanged from previous run.';
+    }
+
+    document.getElementById('history-movement').textContent = movement;
+    document.getElementById('history-note').textContent =
+      `Showing latest ${recentDesc.length} governance runs.`;
+
+    document.getElementById('history-table').innerHTML = `
+      <div class="card">
+        <div class="card-body open">
+          <table>
+            <thead>
+              <tr>
+                <th>Run ID</th>
+                <th>Timestamp</th>
+                <th>Scenario</th>
+                <th>Total</th>
+                <th>Passed</th>
+                <th>Failed</th>
+                <th>Compliance</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${recentDesc.map(run => `
+                <tr>
+                  <td><span class="ctrl">${runId(run)}</span></td>
+                  <td>${run.timestamp ? new Date(run.timestamp).toLocaleString() : '—'}</td>
+                  <td>${run.scenario || run.type || '—'}</td>
+                  <td>${runTotal(run)}</td>
+                  <td><span class="sp">${runPassed(run)}</span></td>
+                  <td><span class="sf">${runFailed(run)}</span></td>
+                  <td>${runRate(run).toFixed(1)}%</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+
+  }catch(e){
+    document.getElementById('history-chart').innerHTML =
+      `<div class="msg">No history file found yet.</div>`;
+    document.getElementById('history-movement').textContent =
+      'Run history has not been generated yet.';
+    document.getElementById('history-table').innerHTML = '';
+  }
+}
+
 async function loadLiveAssessments(){
   try{
     const live = await get(BASE + 'live-entra-summary.json');
-
     document.getElementById('live-assessments').innerHTML =
       card(live,'live-entra','live-entra',false);
-
     return live;
   }catch(e){
     document.getElementById('live-assessments').innerHTML =
@@ -384,7 +525,9 @@ async function loadGroup(ids,targetId,isCustom=false){
 
 async function init(){
   buildFrameworkPanel();
+
   await loadMeta();
+  await loadHistory();
 
   const live = await loadLiveAssessments();
 
