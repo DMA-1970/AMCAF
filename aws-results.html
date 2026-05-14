@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AMCAF — AWS Governance</title>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,sans-serif;background:#0d1117;color:#e6edf3;min-height:100vh;padding:24px 28px}
+a{color:#58a6ff;text-decoration:none}
+a:hover{text-decoration:underline}
+
+header{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:16px;margin-bottom:24px}
+.header-left h1{font-size:22px;font-weight:600;color:#f0f6fc;margin-bottom:4px}
+.header-left p{font-size:13px;color:#8b949e}
+
+.btn-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:8px;border-radius:6px;padding:8px 16px;font-size:13px;font-weight:500;text-decoration:none;white-space:nowrap}
+.btn-ghost{background:#161b22;color:#e6edf3;border:1px solid #30363d}
+.btn-ghost:hover{background:#1c2128;text-decoration:none}
+.btn-green{background:#238636;color:#fff;border:1px solid #2ea043}
+
+.breadcrumb{display:flex;align-items:center;gap:8px;font-size:13px;color:#8b949e;margin-bottom:20px}
+.breadcrumb a{color:#58a6ff}
+.breadcrumb span{color:#484f58}
+
+.status-bar{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:12px 18px;font-size:12px;color:#8b949e;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.status-bar .left{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.status-bar .right{display:flex;align-items:center;gap:12px}
+.status-indicator{display:flex;align-items:center;gap:8px}
+.pulse{display:inline-block;width:8px;height:8px;border-radius:50%;background:#3fb950;animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
+.status-bar span.val{color:#e6edf3;font-weight:500}
+
+.score-hero{background:linear-gradient(135deg,#161b22 0%,#1c2128 100%);border:1px solid #30363d;border-radius:12px;padding:32px 28px;margin-bottom:24px;position:relative;overflow:hidden}
+.score-hero::before{content:'';position:absolute;top:0;right:0;width:200px;height:200px;background:radial-gradient(circle,rgba(63,185,80,0.1) 0%,transparent 70%);pointer-events:none}
+.score-content{position:relative;z-index:1}
+.score-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;margin-bottom:20px}
+.score-title{font-size:16px;font-weight:600;color:#f0f6fc}
+.score-meta{font-size:12px;color:#8b949e}
+.score-display{display:flex;align-items:flex-end;gap:32px;flex-wrap:wrap}
+.score-main{flex:0 0 auto}
+.score-number{font-size:72px;font-weight:700;line-height:1;color:#3fb950;font-variant-numeric:tabular-nums}
+.score-label{font-size:13px;color:#8b949e;margin-top:4px}
+.score-bars{flex:1;min-width:280px;display:flex;flex-direction:column;gap:12px}
+.score-bar-item{display:flex;align-items:center;gap:12px}
+.score-bar-label{font-size:12px;color:#8b949e;min-width:100px}
+.score-bar-track{flex:1;height:8px;background:#21262d;border-radius:4px;overflow:hidden;position:relative}
+.score-bar-fill{height:100%;border-radius:4px;transition:width 0.6s ease}
+.score-bar-fill.high{background:#3fb950}
+.score-bar-fill.medium{background:#d29922}
+.score-bar-fill.low{background:#f85149}
+.score-bar-val{font-size:12px;color:#e6edf3;font-weight:500;min-width:40px;text-align:right}
+
+.meta-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:24px}
+.meta-card{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:16px 18px}
+.meta-card .val{font-size:28px;font-weight:600;line-height:1;margin-bottom:6px}
+.meta-card .lbl{font-size:11px;color:#8b949e;text-transform:uppercase;letter-spacing:0.05em}
+.meta-card.pass .val{color:#3fb950}
+.meta-card.fail .val{color:#f85149}
+.meta-card.warn .val{color:#d29922}
+.meta-card.info .val{color:#58a6ff}
+.meta-card.neutral .val{color:#e6edf3}
+
+.section-label{font-size:11px;font-weight:500;color:#8b949e;text-transform:uppercase;letter-spacing:.06em;margin:24px 0 12px}
+
+.grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(400px,1fr));gap:12px;margin-bottom:12px}
+
+.panel{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:18px 20px}
+.panel-title{font-size:14px;font-weight:600;color:#f0f6fc;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.panel-title .icon{font-size:16px}
+
+.trend-chart{height:180px;display:flex;align-items:flex-end;gap:8px;border-top:1px solid #30363d;padding-top:14px;margin-top:12px}
+.trend-bar{flex:1;background:#238636;border-radius:4px 4px 0 0;min-height:6px;position:relative;cursor:pointer;transition:all 0.2s}
+.trend-bar:hover{opacity:0.8}
+.trend-bar.current{background:#3fb950;box-shadow:0 0 12px rgba(63,185,80,0.4)}
+.trend-tooltip{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);background:#21262d;border:1px solid #30363d;border-radius:6px;padding:8px 10px;font-size:11px;white-space:nowrap;opacity:0;pointer-events:none;margin-bottom:8px;transition:opacity 0.2s}
+.trend-bar:hover .trend-tooltip{opacity:1}
+.trend-note{font-size:11px;color:#8b949e;margin-top:10px}
+
+.findings-list{display:flex;flex-direction:column;gap:8px}
+.finding-item{background:#0d1117;border:1px solid #21262d;border-radius:6px;padding:12px 14px;display:flex;align-items:flex-start;gap:12px}
+.finding-item.pass{border-left:3px solid #3fb950}
+.finding-item.fail{border-left:3px solid #f85149;background:#1a0d0d}
+.finding-icon{font-size:18px;flex-shrink:0;margin-top:2px}
+.finding-icon.pass{color:#3fb950}
+.finding-icon.fail{color:#f85149}
+.finding-content{flex:1;min-width:0}
+.finding-header{display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap}
+.finding-control{font-family:ui-monospace,monospace;font-size:11px;background:#21262d;color:#e6edf3;padding:2px 7px;border-radius:4px}
+.finding-provider{font-size:11px;padding:2px 8px;border-radius:4px;font-weight:500;background:#1a2a1a;color:#3fb950}
+.finding-status{font-size:11px;font-weight:600;padding:2px 8px;border-radius:4px}
+.finding-status.pass{background:#1a3a2a;color:#3fb950}
+.finding-status.fail{background:#3a1a1a;color:#f85149}
+.finding-detail{font-size:12px;color:#e6edf3;line-height:1.5;margin-bottom:4px}
+.finding-refs{font-size:10px;color:#8b949e;line-height:1.6}
+
+.history-table{background:#161b22;border:1px solid #30363d;border-radius:8px;overflow:hidden}
+.history-table table{width:100%;border-collapse:collapse;font-size:12px}
+.history-table th{background:#0d1117;color:#8b949e;font-weight:500;text-align:left;padding:10px 14px;border-bottom:1px solid #30363d}
+.history-table td{padding:10px 14px;border-bottom:1px solid #21262d}
+.history-table tr:last-child td{border-bottom:none}
+.history-table tr:hover td{background:#1c2128}
+.history-table .run-id{font-family:ui-monospace,monospace;font-size:11px;color:#3fb950}
+.history-table .sp{color:#3fb950;font-weight:600}
+.history-table .sf{color:#f85149;font-weight:600}
+
+.empty-state{text-align:center;padding:60px 20px;color:#8b949e}
+.empty-state .icon{font-size:48px;margin-bottom:16px;opacity:0.5}
+.empty-state .title{font-size:16px;font-weight:500;color:#e6edf3;margin-bottom:8px}
+.empty-state .desc{font-size:13px}
+
+.err{background:#3a1a1a;border:1px solid #da3633;border-radius:8px;padding:14px 18px;color:#f85149;font-size:13px;margin-bottom:20px;display:flex;align-items:center;gap:10px}
+.err .icon{font-size:18px}
+
+footer{margin-top:32px;font-size:11px;color:#484f58;text-align:center;padding-bottom:8px}
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="header-left">
+    <h1>AMCAF — AWS Governance</h1>
+    <p>Live AWS Identity & Security governance assessment · IAM, ENC, LOG, NET domains</p>
+  </div>
+
+  <div class="btn-row">
+    <a class="btn btn-ghost" href="index.html">← Main dashboard</a>
+    <a class="btn btn-ghost" href="entra-results.html">Azure governance</a>
+    <a class="btn btn-ghost" href="history.html">Run history</a>
+    <a class="btn btn-green" href="https://github.com/DMA-1970/AMCAF" target="_blank" rel="noopener">View on GitHub</a>
+  </div>
+</header>
+
+<div class="breadcrumb">
+  <a href="index.html">Dashboard</a>
+  <span>›</span>
+  <span>AWS Governance</span>
+</div>
+
+<div id="err-container"></div>
+
+<div id="status-bar" class="status-bar" style="display:none">
+  <div class="left">
+    <div class="status-indicator">
+      <span class="pulse"></span>
+      <span>Last assessment: <span class="val" id="last-time">—</span></span>
+    </div>
+    <div class="status-indicator">
+      <span>Source: <span class="val">AWS SDK (boto3)</span></span>
+    </div>
+  </div>
+  <div class="right">
+    <span id="assessment-status">—</span>
+  </div>
+</div>
+
+<div id="score-hero" class="score-hero" style="display:none">
+  <div class="score-content">
+    <div class="score-header">
+      <div class="score-title">AWS Governance Score</div>
+      <div class="score-meta">Updated: <span id="score-updated">—</span></div>
+    </div>
+    <div class="score-display">
+      <div class="score-main">
+        <div class="score-number" id="overall-score">—</div>
+        <div class="score-label">Overall Score</div>
+      </div>
+      <div class="score-bars" id="score-bars"></div>
+    </div>
+  </div>
+</div>
+
+<div id="meta-grid" class="meta-grid"></div>
+
+<div class="section-label">Governance posture</div>
+<div class="grid-2">
+  <div class="panel">
+    <div class="panel-title">
+      <span class="icon">📊</span>
+      Compliance trend
+    </div>
+    <div id="trend-chart" class="trend-chart">
+      <div class="empty-state">
+        <div class="desc">Loading historical trend data…</div>
+      </div>
+    </div>
+    <div id="trend-note" class="trend-note"></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">
+      <span class="icon">🎯</span>
+      Key metrics
+    </div>
+    <div id="key-metrics" style="font-size:12px;color:#8b949e;line-height:1.8">
+      Loading metrics…
+    </div>
+  </div>
+</div>
+
+<div class="section-label">Live governance findings</div>
+<div id="findings-panel" class="panel">
+  <div class="findings-list">
+    <div class="empty-state">
+      <div class="icon">🔍</div>
+      <div class="desc">Loading governance findings…</div>
+    </div>
+  </div>
+</div>
+
+<div class="section-label">Assessment history</div>
+<div id="history-panel" class="history-table">
+  <div class="empty-state">
+    <div class="icon">📋</div>
+    <div class="desc">Loading assessment history…</div>
+  </div>
+</div>
+
+<footer>
+  AMCAF v1.0 · MSc Enterprise IT Management, University of Essex Online ·
+  <a href="https://github.com/DMA-1970/AMCAF" target="_blank" rel="noopener">GitHub</a>
+</footer>
+
+<script>
+const BASE = 'https://raw.githubusercontent.com/DMA-1970/AMCAF/main/results/';
+const HISTORY_BASE = BASE + 'history/';
+
+async function fetchJSON(url){
+  const response = await fetch(url + '?nc=' + Date.now());
+  if(!response.ok) throw new Error(`HTTP ${response.status}`);
+  return response.json();
+}
+
+function showError(message){
+  document.getElementById('err-container').innerHTML =
+    `<div class="err"><span class="icon">⚠</span><span>${message}</span></div>`;
+}
+
+function formatDate(dateString){
+  if(!dateString) return '—';
+  return new Date(dateString).toLocaleString('en-GB',{
+    year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'
+  });
+}
+
+function formatDateShort(dateString){
+  if(!dateString) return '—';
+  return new Date(dateString).toLocaleDateString('en-GB',{month:'short',day:'numeric'});
+}
+
+function getScoreClass(score){
+  if(score >= 80) return 'high';
+  if(score >= 50) return 'medium';
+  return 'low';
+}
+
+async function loadLatestAssessment(){
+  try{
+    const data = await fetchJSON(BASE + 'aws_assessment.json');
+    const timestamp = data.assessment_timestamp_utc || '';
+    const overallScore = data.overall_score || 0;
+    const summary = data.summary || {};
+    const findings = data.findings || [];
+
+    const passed = findings.filter(f => f.status === 'PASS').length;
+    const failed = findings.filter(f => f.status === 'FAIL').length;
+    const errors = findings.filter(f => f.status === 'ERROR').length;
+    const total = findings.length;
+    const complianceRate = total > 0 ? ((passed / total) * 100).toFixed(1) : '0.0';
+
+    document.getElementById('status-bar').style.display = 'flex';
+    document.getElementById('last-time').textContent = formatDate(timestamp);
+
+    const rate = parseFloat(complianceRate);
+    const statusText = rate >= 80 ? '✓ Compliant' : rate >= 50 ? '⚠ Attention required' : '✗ Non-compliant';
+    const statusColor = rate >= 80 ? '#3fb950' : rate >= 50 ? '#d29922' : '#f85149';
+    document.getElementById('assessment-status').innerHTML =
+      `<span style="color:${statusColor}">${statusText}</span>`;
+
+    document.getElementById('score-hero').style.display = 'block';
+    document.getElementById('overall-score').textContent = overallScore;
+    document.getElementById('score-updated').textContent = formatDate(timestamp);
+
+    const iamUsers = summary.total_iam_users || 0;
+    const mfaUsers = summary.users_with_mfa || 0;
+    const mfaPct = iamUsers > 0 ? Math.round((mfaUsers / iamUsers) * 100) : 0;
+    const s3Buckets = summary.total_s3_buckets || 0;
+    const encBuckets = summary.encrypted_buckets || 0;
+    const encPct = s3Buckets > 0 ? Math.round((encBuckets / s3Buckets) * 100) : 100;
+
+    document.getElementById('score-bars').innerHTML = `
+      <div class="score-bar-item">
+        <div class="score-bar-label">Overall governance</div>
+        <div class="score-bar-track">
+          <div class="score-bar-fill ${getScoreClass(overallScore)}" style="width:${overallScore}%"></div>
+        </div>
+        <div class="score-bar-val">${overallScore}%</div>
+      </div>
+      <div class="score-bar-item">
+        <div class="score-bar-label">IAM MFA coverage</div>
+        <div class="score-bar-track">
+          <div class="score-bar-fill ${getScoreClass(mfaPct)}" style="width:${mfaPct}%"></div>
+        </div>
+        <div class="score-bar-val">${mfaUsers}/${iamUsers}</div>
+      </div>
+      <div class="score-bar-item">
+        <div class="score-bar-label">S3 encryption</div>
+        <div class="score-bar-track">
+          <div class="score-bar-fill ${getScoreClass(encPct)}" style="width:${encPct}%"></div>
+        </div>
+        <div class="score-bar-val">${encBuckets}/${s3Buckets}</div>
+      </div>
+    `;
+
+    document.getElementById('meta-grid').innerHTML = `
+      <div class="meta-card neutral"><div class="val">${total}</div><div class="lbl">Total checks</div></div>
+      <div class="meta-card pass"><div class="val">${passed}</div><div class="lbl">Passed</div></div>
+      <div class="meta-card fail"><div class="val">${failed}</div><div class="lbl">Failed</div></div>
+      <div class="meta-card info"><div class="val">${complianceRate}%</div><div class="lbl">Compliance rate</div></div>
+      <div class="meta-card neutral"><div class="val">${iamUsers}</div><div class="lbl">IAM users</div></div>
+      <div class="meta-card neutral"><div class="val">${s3Buckets}</div><div class="lbl">S3 buckets</div></div>
+      <div class="meta-card ${errors > 0 ? 'warn' : 'neutral'}"><div class="val">${errors}</div><div class="lbl">Check errors</div></div>
+    `;
+
+    if(findings.length === 0){
+      document.getElementById('findings-panel').innerHTML = `
+        <div class="empty-state">
+          <div class="title">No findings</div>
+          <div class="desc">All governance checks passed successfully.</div>
+        </div>`;
+    }else{
+      const findingsHTML = findings.map(f => {
+        const isPassed = f.status === 'PASS';
+        const isError = f.status === 'ERROR';
+        const icon = isPassed ? '✓' : isError ? '?' : '✗';
+        const risk = f.risk || 'UNKNOWN';
+        const riskColor = risk === 'LOW' ? '#3fb950' : risk === 'MEDIUM' ? '#d29922' : '#f85149';
+        const riskBg = risk === 'LOW' ? '#1a3a2a' : risk === 'MEDIUM' ? '#2a2a1a' : '#3a1a1a';
+        return `
+          <div class="finding-item ${isPassed ? 'pass' : 'fail'}">
+            <div class="finding-icon ${isPassed ? 'pass' : 'fail'}">${icon}</div>
+            <div class="finding-content">
+              <div class="finding-header">
+                <span class="finding-control">${f.control_id || 'N/A'}</span>
+                <span class="finding-provider">AWS</span>
+                <span class="finding-status ${isPassed ? 'pass' : 'fail'}">${f.status}</span>
+                <span style="font-size:11px;color:${riskColor};font-weight:600;padding:2px 8px;border-radius:4px;background:${riskBg}">${risk} RISK</span>
+              </div>
+              <div class="finding-detail"><strong>${f.control || 'Control'}:</strong> ${f.evidence || 'No evidence available'}</div>
+              ${!isPassed ? `<div class="finding-detail" style="margin-top:6px"><strong>Recommendation:</strong> ${f.recommendation || 'No recommendation provided'}</div>` : ''}
+              ${f.mapping ? `<div class="finding-refs">Regulatory mapping: ${f.mapping}</div>` : ''}
+            </div>
+          </div>`;
+      }).join('');
+      document.getElementById('findings-panel').innerHTML =
+        `<div class="findings-list">${findingsHTML}</div>`;
+    }
+
+    document.getElementById('key-metrics').innerHTML = `
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div><strong>Account assessed:</strong> ${summary.account_id || 'N/A'}</div>
+        <div><strong>Assessment time:</strong> ${formatDate(timestamp)}</div>
+        <div><strong>Governance score:</strong> ${overallScore}/100</div>
+        <div><strong>Checks performed:</strong> ${total}</div>
+        <div><strong>IAM users / MFA:</strong> ${iamUsers} total, ${mfaUsers} with MFA</div>
+        <div><strong>Custom policies:</strong> ${summary.custom_policies || 0}</div>
+        <div><strong>CloudTrail trails:</strong> ${summary.cloudtrail_trails || 0} (${summary.multi_region_trails || 0} multi-region)</div>
+        <div><strong>Security groups:</strong> ${summary.total_security_groups || 0}</div>
+      </div>`;
+
+    return data;
+  }catch(e){
+    showError('Unable to load AWS assessment. Run aws_identity_assessment.py to generate results.');
+    throw e;
+  }
+}
+
+async function loadHistory(){
+  try{
+    const historyData = await fetchJSON(HISTORY_BASE + 'history.json');
+    const runs = Array.isArray(historyData) ? historyData : (historyData.runs || []);
+
+    const awsRuns = runs.filter(r =>
+      (r.scenario || '').toLowerCase().includes('aws') ||
+      (r.run_id || '').toUpperCase().startsWith('AWS')
+    );
+
+    if(awsRuns.length === 0){
+      document.getElementById('trend-chart').innerHTML = `
+        <div class="empty-state">
+          <div class="title">No historical data</div>
+          <div class="desc">AWS assessments will appear here after the first run.</div>
+        </div>`;
+      document.getElementById('history-panel').innerHTML = `
+        <div class="empty-state">
+          <div class="title">No assessment history</div>
+          <div class="desc">Run aws_identity_assessment.py to start tracking history.</div>
+        </div>`;
+      return;
+    }
+
+    awsRuns.sort((a,b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
+    const recentRuns = awsRuns.slice(0,10).reverse();
+    const maxRate = Math.max(...recentRuns.map(r => r.compliance_rate || 0));
+
+    document.getElementById('trend-chart').innerHTML = recentRuns.map((run,i) => {
+      const rate = run.compliance_rate || 0;
+      const height = maxRate > 0 ? (rate / maxRate) * 100 : 0;
+      const isCurrent = i === recentRuns.length - 1;
+      return `
+        <div class="trend-bar ${isCurrent ? 'current' : ''}" style="height:${Math.max(height,6)}%">
+          <div class="trend-tooltip">${formatDateShort(run.timestamp)}<br>${rate.toFixed(1)}% compliance</div>
+        </div>`;
+    }).join('');
+
+    if(recentRuns.length >= 2){
+      const latest = recentRuns[recentRuns.length - 1];
+      const prev = recentRuns[recentRuns.length - 2];
+      const diff = (latest.compliance_rate || 0) - (prev.compliance_rate || 0);
+      document.getElementById('trend-note').textContent = diff > 0
+        ? `▲ Compliance improved by ${diff.toFixed(1)} percentage points.`
+        : diff < 0
+          ? `▼ Compliance declined by ${Math.abs(diff).toFixed(1)} percentage points.`
+          : 'Compliance unchanged from previous assessment.';
+    }else{
+      document.getElementById('trend-note').textContent = 'First recorded AWS assessment.';
+    }
+
+    document.getElementById('history-panel').innerHTML = `
+      <table>
+        <thead>
+          <tr>
+            <th>Run ID</th><th>Timestamp</th><th>Scenario</th>
+            <th>Total</th><th>Passed</th><th>Failed</th><th>Compliance</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${awsRuns.slice(0,20).map(run => `
+            <tr>
+              <td><span class="run-id">${run.run_id || 'N/A'}</span></td>
+              <td>${formatDate(run.timestamp)}</td>
+              <td>${run.scenario || '—'}</td>
+              <td>${run.total_checks || 0}</td>
+              <td><span class="sp">${run.passed || 0}</span></td>
+              <td><span class="sf">${run.failed || 0}</span></td>
+              <td>${(run.compliance_rate || 0).toFixed(1)}%</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>`;
+
+  }catch(e){
+    console.log('History not available:', e);
+    document.getElementById('trend-chart').innerHTML =
+      `<div class="empty-state"><div class="desc">Historical data not yet available.</div></div>`;
+  }
+}
+
+async function init(){
+  try{
+    await loadLatestAssessment();
+    await loadHistory();
+  }catch(e){
+    console.error('Initialization error:', e);
+  }
+}
+
+init();
+</script>
+
+</body>
+</html>

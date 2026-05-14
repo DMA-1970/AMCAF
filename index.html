@@ -194,8 +194,20 @@ footer{margin-top:28px;font-size:11px;color:#484f58;text-align:center;padding-bo
 </div>
 
 <div class="section-label">Live governance assessments</div>
-<div id="live-assessments" class="grid">
-  <div class="msg">Loading live governance assessment…</div>
+
+<div class="section-label" style="font-size:12px;color:#8b949e;text-transform:none;letter-spacing:0;margin:12px 0 8px;font-weight:400">AWS — Amazon Web Services</div>
+<div id="live-aws" class="grid">
+  <div class="msg">Loading AWS governance assessment…</div>
+</div>
+
+<div class="section-label" style="font-size:12px;color:#8b949e;text-transform:none;letter-spacing:0;margin:12px 0 8px;font-weight:400">Azure — Microsoft Entra Identity Governance</div>
+<div id="live-entra" class="grid">
+  <div class="msg">Loading Azure governance assessment…</div>
+</div>
+
+<div class="section-label" style="font-size:12px;color:#8b949e;text-transform:none;letter-spacing:0;margin:12px 0 8px;font-weight:400">GCP — Google Cloud Platform</div>
+<div id="live-gcp" class="grid">
+  <div class="msg">Loading GCP governance assessment…</div>
 </div>
 
 <div class="section-label">Standard scenarios — SC-01 to SC-06</div>
@@ -234,7 +246,9 @@ const LABELS = {
   'sc-07':'SC-07 — Full 20-control compliant baseline',
   'sc-08':'SC-08 — Full 20-control failure scenario',
   'sc-custom':'SC-CUSTOM — Custom scenario',
-  'live-entra':'LIVE-ENTRA — Microsoft Entra Identity Governance'
+  'live-entra':'LIVE-ENTRA — Microsoft Entra Identity Governance',
+  'live-aws':'LIVE-AWS — Amazon Web Services Identity & Security Governance',
+  'live-gcp':'LIVE-GCP — Google Cloud Platform Identity & Security Governance'
 };
 
 const ORG_CONTROLS = new Set(['IAM-04','DAT-01','DAT-02','INC-01','TPM-01']);
@@ -480,15 +494,58 @@ async function loadHistory(){
   }
 }
 
-async function loadLiveAssessments(){
+function normaliseAWSData(data){
+  return {
+    report_metadata:{
+      total_checks: data.summary?.total_checks || 0,
+      passed: data.summary?.passed || 0,
+      failed: data.summary?.failed || 0,
+      compliance_rate: (data.overall_score || 0) + '%'
+    },
+    findings: (data.findings || []).map(f => ({
+      control_id: f.control_id || 'N/A',
+      provider: 'AWS',
+      status: f.status,
+      detail: f.evidence || '',
+      regulatory_refs: f.mapping ? f.mapping.split(' / ') : [],
+      config_attribute: f.risk ? 'Risk: ' + f.risk : ''
+    }))
+  };
+}
+
+async function loadAWSAssessment(){
+  try{
+    const raw = await get(BASE + 'aws_assessment.json');
+    const data = normaliseAWSData(raw);
+    document.getElementById('live-aws').innerHTML = card(data,'live-aws','live-aws',false);
+    return data;
+  }catch(e){
+    document.getElementById('live-aws').innerHTML =
+      `<div class="msg">No AWS governance assessment found yet.</div>`;
+    return null;
+  }
+}
+
+async function loadAzureAssessment(){
   try{
     const live = await get(BASE + 'live-entra-summary.json');
-    document.getElementById('live-assessments').innerHTML =
-      card(live,'live-entra','live-entra',false);
+    document.getElementById('live-entra').innerHTML = card(live,'live-entra','live-entra',false);
     return live;
   }catch(e){
-    document.getElementById('live-assessments').innerHTML =
-      `<div class="msg">No live governance assessment found yet.</div>`;
+    document.getElementById('live-entra').innerHTML =
+      `<div class="msg">No Azure governance assessment found yet.</div>`;
+    return null;
+  }
+}
+
+async function loadGCPAssessment(){
+  try{
+    const raw = await get(BASE + 'gcp_assessment.json');
+    document.getElementById('live-gcp').innerHTML = card(raw,'live-gcp','live-gcp',false);
+    return raw;
+  }catch(e){
+    document.getElementById('live-gcp').innerHTML =
+      `<div class="msg">No GCP governance assessment found yet.</div>`;
     return null;
   }
 }
@@ -529,7 +586,11 @@ async function init(){
   await loadMeta();
   await loadHistory();
 
-  const live = await loadLiveAssessments();
+  const [awsData, azureData, gcpData] = await Promise.all([
+    loadAWSAssessment(),
+    loadAzureAssessment(),
+    loadGCPAssessment()
+  ]);
 
   const {valid:standard,errors:stdErr} =
     await loadGroup(STANDARD_IDS,'grid-standard',false);
@@ -549,7 +610,9 @@ async function init(){
   }
 
   const datasets = [
-    ...(live ? [live] : []),
+    ...(awsData ? [awsData] : []),
+    ...(azureData ? [azureData] : []),
+    ...(gcpData ? [gcpData] : []),
     ...standard,
     ...extended,
     ...(customData ? [customData] : [])

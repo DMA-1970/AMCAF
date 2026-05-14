@@ -1,0 +1,11 @@
+[
+  {
+    "run_id": "RUN-2026-05-12-001",
+    "timestamp": "2026-05-12T18:00:00Z",
+    "scenario": "baseline",
+    "total_checks": 96,
+    "passed": 81,
+    "failed": 15,
+    "compliance_rate": 84.4
+  }
+]
