@@ -558,11 +558,31 @@ async function loadAzureAssessment(){
   }
 }
 
+function normaliseGCPData(data){
+  return {
+    report_metadata:{
+      total_checks: data.summary?.total_checks || 0,
+      passed: data.summary?.passed || 0,
+      failed: data.summary?.failed || 0,
+      compliance_rate: (data.overall_score || 0) + '%'
+    },
+    findings: (data.findings || []).map(f => ({
+      control_id: f.control_id || 'N/A',
+      provider: 'GCP',
+      status: f.status,
+      detail: f.evidence || '',
+      regulatory_refs: f.mapping ? f.mapping.split(' / ') : [],
+      config_attribute: f.risk ? 'Risk: ' + f.risk : ''
+    }))
+  };
+}
+
 async function loadGCPAssessment(){
   try{
     const raw = await get(BASE + 'gcp_assessment.json');
-    document.getElementById('live-gcp').innerHTML = card(raw,'live-gcp','live-gcp',false);
-    return raw;
+    const data = normaliseGCPData(raw);
+    document.getElementById('live-gcp').innerHTML = card(data,'live-gcp','live-gcp',false);
+    return data;
   }catch(e){
     document.getElementById('live-gcp').innerHTML =
       `<div class="msg">No GCP governance assessment found yet.</div>`;
