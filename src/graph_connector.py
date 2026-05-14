@@ -1,6 +1,9 @@
 import os
 import requests
+import urllib3
 from dotenv import load_dotenv
+
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 load_dotenv()
 
@@ -31,7 +34,7 @@ class GraphConnector:
             "grant_type": "client_credentials"
         }
 
-        response = requests.post(TOKEN_URL, data=body)
+        response = requests.post(TOKEN_URL, data=body, verify=False)
 
         response.raise_for_status()
 
@@ -43,7 +46,7 @@ class GraphConnector:
             "Authorization": f"Bearer {self.access_token}"
         }
 
-        response = requests.get(url, headers=headers)
+        response = requests.get(url, headers=headers, verify=False)
 
         response.raise_for_status()
 
