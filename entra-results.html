@@ -431,11 +431,11 @@ async function loadHistory(){
     const historyData = await fetchJSON(HISTORY_BASE + 'history.json');
     const runs = Array.isArray(historyData) ? historyData : (historyData.runs || []);
     
-    // Filter for Entra assessments only
-    const entraRuns = runs.filter(r => 
-      (r.scenario || '').toLowerCase().includes('entra') || 
-      (r.type || '').toLowerCase().includes('entra')
-    );
+    // Show all runs except those explicitly scoped to another provider
+    const entraRuns = runs.filter(r => {
+      const sc = (r.scenario || r.type || '').toLowerCase();
+      return !sc.startsWith('live-aws') && !sc.startsWith('live-gcp');
+    });
     
     if(entraRuns.length === 0){
       document.getElementById('trend-chart').innerHTML = `
