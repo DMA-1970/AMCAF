@@ -52,5 +52,23 @@
     "passed": 6,
     "failed": 4,
     "compliance_rate": 60.0
+  },
+  {
+    "run_id": "AWS-2026-05-14-223547",
+    "timestamp": "2026-05-14T22:35:47.372500+00:00",
+    "scenario": "live-aws",
+    "total_checks": 10,
+    "passed": 7,
+    "failed": 3,
+    "compliance_rate": 70.0
+  },
+  {
+    "run_id": "GCP-2026-05-14-223805",
+    "timestamp": "2026-05-14T22:38:05.335015+00:00",
+    "scenario": "live-gcp",
+    "total_checks": 10,
+    "passed": 6,
+    "failed": 4,
+    "compliance_rate": 60.0
   }
 ]
