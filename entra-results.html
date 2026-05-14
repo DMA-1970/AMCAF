@@ -379,7 +379,6 @@ async function loadLatestAssessment(){
     document.getElementById('meta-grid').innerHTML = metaHTML;
     
     // Build findings from entra_assessment.json structure
-    const findings = data.findings || [];
     if(findings.length === 0){
       document.getElementById('findings-panel').innerHTML = `
         <div class="empty-state">
