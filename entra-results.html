@@ -392,22 +392,24 @@ async function loadLatestAssessment(){
       const findingsHTML = findings.map(f => {
         const status = f.status || 'UNKNOWN';
         const isPassed = status === 'PASS';
-        const icon = isPassed ? '✓' : '✗';
+        const isError = status === 'ERROR';
+        const icon = isPassed ? '✓' : isError ? '?' : '✗';
         const risk = f.risk || 'UNKNOWN';
         const riskColor = risk === 'LOW' ? '#3fb950' : risk === 'MEDIUM' ? '#d29922' : '#f85149';
-        
+        const riskBg = risk === 'LOW' ? '#1a3a2a' : risk === 'MEDIUM' ? '#2a2a1a' : '#3a1a1a';
+
         return `
           <div class="finding-item ${isPassed ? 'pass' : 'fail'}">
             <div class="finding-icon ${isPassed ? 'pass' : 'fail'}">${icon}</div>
             <div class="finding-content">
               <div class="finding-header">
-                <span class="finding-control">${f.control || 'N/A'}</span>
+                <span class="finding-control">${f.control_id || 'N/A'}</span>
                 <span class="finding-provider">Azure</span>
                 <span class="finding-status ${isPassed ? 'pass' : 'fail'}">${status}</span>
-                <span style="font-size:11px;color:${riskColor};font-weight:600;padding:2px 8px;border-radius:4px;background:${risk === 'LOW' ? '#1a3a2a' : risk === 'MEDIUM' ? '#2a2a1a' : '#3a1a1a'}">${risk} RISK</span>
+                <span style="font-size:11px;color:${riskColor};font-weight:600;padding:2px 8px;border-radius:4px;background:${riskBg}">${risk} RISK</span>
               </div>
-              <div class="finding-detail"><strong>Evidence:</strong> ${f.evidence || 'No evidence available'}</div>
-              <div class="finding-detail" style="margin-top:6px"><strong>Recommendation:</strong> ${f.recommendation || 'No recommendation provided'}</div>
+              <div class="finding-detail"><strong>${f.control || 'Control'}:</strong> ${f.evidence || 'No evidence available'}</div>
+              ${!isPassed ? `<div class="finding-detail" style="margin-top:6px"><strong>Recommendation:</strong> ${f.recommendation || 'No recommendation provided'}</div>` : ''}
               ${f.mapping ? `<div class="finding-refs">Regulatory mapping: ${f.mapping}</div>` : ''}
             </div>
           </div>

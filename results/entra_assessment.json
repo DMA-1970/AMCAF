@@ -1,40 +1,116 @@
 {
-    "assessment_name": "AMCAF Entra Identity Governance Assessment",
-    "assessment_timestamp_utc": "2026-05-14T21:17:38.635933+00:00",
-    "overall_score": 75,
-    "summary": {
-        "total_users": 24,
-        "enabled_users": 24,
-        "guest_users": 2,
-        "groups": 18,
-        "application_registrations": 7,
-        "conditional_access_policies": 8,
-        "enabled_conditional_access_policies": 8
+  "assessment_name": "AMCAF Entra Identity Governance Assessment",
+  "assessment_timestamp_utc": "2026-05-14T21:36:24.032341+00:00",
+  "overall_score": 70,
+  "summary": {
+    "global_admin_count": 1,
+    "total_privileged_assignments": 1,
+    "apps_with_expired_secrets": 0,
+    "apps_near_expiry": 0,
+    "managed_identity_count": 0,
+    "apps_with_long_lived_secrets": 0,
+    "named_locations": 0,
+    "total_users": 24,
+    "enabled_users": 24,
+    "guest_users": 2,
+    "application_registrations": 7,
+    "conditional_access_policies": 8,
+    "enabled_conditional_access_policies": 8,
+    "total_checks": 10,
+    "passed": 7,
+    "failed": 3,
+    "errors": 0
+  },
+  "findings": [
+    {
+      "control": "Admin Account MFA Enforcement",
+      "control_id": "IAM-01",
+      "status": "PASS",
+      "risk": "LOW",
+      "evidence": "7 CA policy(ies) enforce MFA for admin/all accounts: Require MFA for admins, Block all legacy sign-ins that don't support MFA, Require MFA and a password change when high-risk users are detected",
+      "recommendation": "Continue monitoring CA policies",
+      "mapping": "NIST IA-2 / ISO27001 A.9.4.2 / DORA ICT Risk"
     },
-    "findings": [
-        {
-            "control": "Conditional Access Enforcement",
-            "status": "PASS",
-            "risk": "LOW",
-            "evidence": "8 enabled Conditional Access policies identified.",
-            "recommendation": "Implement baseline Conditional Access policies for administrators, MFA and unmanaged devices.",
-            "mapping": "NIST IA-2 / ISO27001 Access Control / DORA"
-        },
-        {
-            "control": "Guest User Exposure",
-            "status": "FAIL",
-            "risk": "MEDIUM",
-            "evidence": "2 guest users identified.",
-            "recommendation": "Review B2B guest access regularly, enforce Conditional Access for external users, and implement lifecycle governance or access reviews.",
-            "mapping": "NIST AC-2 / GDPR Article 32"
-        },
-        {
-            "control": "Application Registration Inventory",
-            "status": "PASS",
-            "risk": "LOW",
-            "evidence": "7 application registrations identified.",
-            "recommendation": "Review application ownership, permissions and credential expiry.",
-            "mapping": "NIST CM-8 / ISO27001 Asset Management"
-        }
-    ]
+    {
+      "control": "User MFA Registration",
+      "control_id": "IAM-02",
+      "status": "PASS",
+      "risk": "LOW",
+      "evidence": "Registration report unavailable (Reports.Read.All may be missing). 5 CA policy(ies) require MFA for all users",
+      "recommendation": "Continue monitoring MFA registration",
+      "mapping": "NIST IA-2 / ISO27001 A.9.4.2 / FCA PS21/3"
+    },
+    {
+      "control": "Privileged Role Least Privilege",
+      "control_id": "IAM-03",
+      "status": "PASS",
+      "risk": "LOW",
+      "evidence": "1 Global Administrator(s) assigned. Privileged assignments \u2014 Global Administrator: 1; Exchange Administrator: 0",
+      "recommendation": "Continue monitoring privileged role assignments",
+      "mapping": "NIST AC-6 / ISO27001 A.9.2.3 / DORA"
+    },
+    {
+      "control": "Password Policy Configuration",
+      "control_id": "IAM-04",
+      "status": "PASS",
+      "risk": "LOW",
+      "evidence": "Password never expires (passwordless/managed auth model). Notification window: 14 days",
+      "recommendation": "Continue monitoring password policy",
+      "mapping": "NIST IA-5 / ISO27001 A.9.4.3"
+    },
+    {
+      "control": "Application Secret Credential Management",
+      "control_id": "ENC-01",
+      "status": "PASS",
+      "risk": "LOW",
+      "evidence": "0 expired, 0 near-expiry (<=30d) app secrets",
+      "recommendation": "Continue monitoring app credential expiry",
+      "mapping": "NIST SC-12 / ISO27001 A.10.1.2 / GDPR Art. 32"
+    },
+    {
+      "control": "Managed Identity Adoption",
+      "control_id": "ENC-02",
+      "status": "PASS",
+      "risk": "LOW",
+      "evidence": "0 managed identity(ies) in use. 0 app(s) with secrets valid >2 years",
+      "recommendation": "Continue monitoring credential lifespans",
+      "mapping": "NIST SC-12 / ISO27001 A.10.1.2 / DORA"
+    },
+    {
+      "control": "Sign-in Audit Log Availability",
+      "control_id": "LOG-01",
+      "status": "FAIL",
+      "risk": "HIGH",
+      "evidence": "Sign-in audit log endpoint unavailable \u2014 AuditLog.Read.All permission may be missing",
+      "recommendation": "Enable diagnostic settings for sign-in logs and configure Log Analytics retention \u226590 days",
+      "mapping": "NIST AU-2 / ISO27001 A.12.4.1 / DORA"
+    },
+    {
+      "control": "Identity Protection Risk Detection",
+      "control_id": "LOG-02",
+      "status": "FAIL",
+      "risk": "MEDIUM",
+      "evidence": "Identity Protection endpoint unavailable \u2014 IdentityRiskyUser.Read.All permission or Entra ID P2 licence may be missing",
+      "recommendation": "Enable Microsoft Entra ID P2 and grant IdentityRiskyUser.Read.All permission",
+      "mapping": "NIST AU-2 / ISO27001 A.12.4.1"
+    },
+    {
+      "control": "Named Location Network Controls",
+      "control_id": "NET-01",
+      "status": "FAIL",
+      "risk": "MEDIUM",
+      "evidence": "0 named location(s) defined for network-based access control",
+      "recommendation": "Define named locations (trusted IPs/ranges) and reference them in Conditional Access policies",
+      "mapping": "NIST SC-7 / ISO27001 A.13.1.3 / DORA"
+    },
+    {
+      "control": "Risky Sign-in Detection Policy",
+      "control_id": "NET-02",
+      "status": "PASS",
+      "risk": "LOW",
+      "evidence": "2 CA policy(ies) respond to risky sign-ins or user risk: Require MFA and a password change when high-risk users are detected, Require MFA when risky sign-ins are detected",
+      "recommendation": "Continue monitoring risk-based CA policies",
+      "mapping": "NIST SC-7 / ISO27001 A.13.1.3 / DORA"
+    }
+  ]
 }

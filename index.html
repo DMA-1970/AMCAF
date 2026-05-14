@@ -526,11 +526,31 @@ async function loadAWSAssessment(){
   }
 }
 
+function normaliseEntraData(data){
+  return {
+    report_metadata:{
+      total_checks: data.summary?.total_checks || 0,
+      passed: data.summary?.passed || 0,
+      failed: data.summary?.failed || 0,
+      compliance_rate: (data.overall_score || 0) + '%'
+    },
+    findings: (data.findings || []).map(f => ({
+      control_id: f.control_id || 'N/A',
+      provider: 'Azure',
+      status: f.status,
+      detail: f.evidence || '',
+      regulatory_refs: f.mapping ? f.mapping.split(' / ') : [],
+      config_attribute: f.risk ? 'Risk: ' + f.risk : ''
+    }))
+  };
+}
+
 async function loadAzureAssessment(){
   try{
-    const live = await get(BASE + 'live-entra-summary.json');
-    document.getElementById('live-entra').innerHTML = card(live,'live-entra','live-entra',false);
-    return live;
+    const raw = await get(BASE + 'entra_assessment.json');
+    const data = normaliseEntraData(raw);
+    document.getElementById('live-entra').innerHTML = card(data,'live-entra','live-entra',false);
+    return data;
   }catch(e){
     document.getElementById('live-entra').innerHTML =
       `<div class="msg">No Azure governance assessment found yet.</div>`;
