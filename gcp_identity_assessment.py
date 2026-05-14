@@ -8,6 +8,9 @@ try:
     from googleapiclient import discovery
     from google.auth import default as google_auth_default
     from google.auth.exceptions import DefaultCredentialsError
+    from google.auth.transport.requests import Request as GoogleAuthRequest
+    import httplib2
+    from google_auth_httplib2 import AuthorizedHttp
     HAS_GCP_SDK = True
 except ImportError:
     HAS_GCP_SDK = False
@@ -15,6 +18,10 @@ except ImportError:
 import json
 import os
 import sys
+import warnings
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+import requests as _requests_lib
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -46,12 +53,24 @@ class GCPGovernanceAssessment:
                     "Set GCP_PROJECT_ID or configure application default credentials with a project"
                 )
 
+            # Corporate proxy intercepts SSL — refresh token via requests with verify=False,
+            # then build API clients using httplib2 with SSL validation disabled.
+            session = _requests_lib.Session()
+            session.verify = False
+            auth_request = GoogleAuthRequest(session=session)
+            credentials.refresh(auth_request)
+
+            http = AuthorizedHttp(
+                credentials,
+                http=httplib2.Http(disable_ssl_certificate_validation=True)
+            )
+
             self._services = {
-                "iam":     discovery.build("iam",                    "v1", credentials=credentials),
-                "compute": discovery.build("compute",                "v1", credentials=credentials),
-                "storage": discovery.build("storage",                "v1", credentials=credentials),
-                "logging": discovery.build("logging",                "v2", credentials=credentials),
-                "crm":     discovery.build("cloudresourcemanager",   "v3", credentials=credentials),
+                "iam":     discovery.build("iam",                    "v1", http=http),
+                "compute": discovery.build("compute",                "v1", http=http),
+                "storage": discovery.build("storage",                "v1", http=http),
+                "logging": discovery.build("logging",                "v2", http=http),
+                "crm":     discovery.build("cloudresourcemanager",   "v3", http=http),
             }
         except DefaultCredentialsError:
             print("ERROR: No GCP credentials found.")
@@ -134,7 +153,7 @@ class GCPGovernanceAssessment:
         try:
             crm = self._svc("crm")
             policy = crm.projects().getIamPolicy(
-                resource=self.project_id, body={}
+                resource=f"projects/{self.project_id}", body={}
             ).execute()
 
             public = []
@@ -171,7 +190,7 @@ class GCPGovernanceAssessment:
         try:
             crm = self._svc("crm")
             policy = crm.projects().getIamPolicy(
-                resource=self.project_id, body={}
+                resource=f"projects/{self.project_id}", body={}
             ).execute()
 
             violations = []
@@ -210,7 +229,7 @@ class GCPGovernanceAssessment:
         try:
             crm = self._svc("crm")
             policy = crm.projects().getIamPolicy(
-                resource=self.project_id, body={}
+                resource=f"projects/{self.project_id}", body={}
             ).execute()
 
             owners = []
@@ -343,7 +362,7 @@ class GCPGovernanceAssessment:
         try:
             crm = self._svc("crm")
             policy = crm.projects().getIamPolicy(
-                resource=self.project_id, body={}
+                resource=f"projects/{self.project_id}", body={}
             ).execute()
 
             audit_configs = policy.get("auditConfigs", [])

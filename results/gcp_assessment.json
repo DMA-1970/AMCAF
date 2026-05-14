@@ -1,0 +1,120 @@
+{
+  "assessment_name": "AMCAF GCP Identity & Security Assessment",
+  "assessment_timestamp_utc": "2026-05-14T22:25:26.056739+00:00",
+  "project_id": "project-620345d3-ff8a-48a8-a0f",
+  "overall_score": 60,
+  "summary": {
+    "service_accounts": 2,
+    "user_managed_keys": 0,
+    "old_keys": 0,
+    "public_iam_bindings": 0,
+    "primitive_role_violations": 1,
+    "project_owner_count": 1,
+    "total_gcs_buckets": 0,
+    "public_buckets": 0,
+    "total_persistent_disks": 0,
+    "cmek_disks": 0,
+    "audit_configs": 0,
+    "data_access_logging": false,
+    "log_sinks": 2,
+    "total_firewall_rules": 4,
+    "ssh_open_rules": 1,
+    "rdp_open_rules": 1,
+    "total_checks": 10,
+    "passed": 6,
+    "failed": 4,
+    "errors": 0
+  },
+  "findings": [
+    {
+      "control": "Service Account Key Rotation",
+      "control_id": "IAM-01",
+      "status": "PASS",
+      "risk": "LOW",
+      "evidence": "2 service account(s), 0 user-managed key(s). 0 key(s) older than 90 days",
+      "recommendation": "Continue monitoring service account key age",
+      "mapping": "NIST IA-5 / ISO27001 A.9.2.6 / DORA ICT Risk"
+    },
+    {
+      "control": "Public IAM Binding Restriction",
+      "control_id": "IAM-02",
+      "status": "PASS",
+      "risk": "LOW",
+      "evidence": "0 IAM binding(s) with allUsers or allAuthenticatedUsers",
+      "recommendation": "Continue monitoring IAM bindings",
+      "mapping": "NIST AC-2 / ISO27001 A.9.2.3 / FCA PS21/3"
+    },
+    {
+      "control": "IAM Least Privilege \u2014 No Primitive Roles",
+      "control_id": "IAM-03",
+      "status": "FAIL",
+      "risk": "HIGH",
+      "evidence": "1 user(s) assigned primitive roles (owner/editor): roles/owner -> user:ninosps3@gmail.com",
+      "recommendation": "Replace primitive roles with predefined or custom roles following least privilege",
+      "mapping": "NIST AC-6 / ISO27001 A.9.2.3 / DORA"
+    },
+    {
+      "control": "Project Owner Count Control",
+      "control_id": "IAM-04",
+      "status": "PASS",
+      "risk": "LOW",
+      "evidence": "1 project owner(s) assigned (threshold: <=3): user:ninosps3@gmail.com",
+      "recommendation": "Continue monitoring owner assignments",
+      "mapping": "NIST IA-5 / ISO27001 A.9.4.3"
+    },
+    {
+      "control": "GCS Bucket Public Access and Encryption",
+      "control_id": "ENC-01",
+      "status": "PASS",
+      "risk": "LOW",
+      "evidence": "0 GCS bucket(s). 0 publicly accessible. Google-managed encryption active on all buckets",
+      "recommendation": "Continue monitoring bucket access controls",
+      "mapping": "NIST SC-13 / ISO27001 A.10.1.1 / GDPR Art. 32"
+    },
+    {
+      "control": "Persistent Disk Encryption",
+      "control_id": "ENC-02",
+      "status": "PASS",
+      "risk": "LOW",
+      "evidence": "0 persistent disk(s). All encrypted at rest by Google default encryption",
+      "recommendation": "Consider CMEK for workloads with regulatory key-control requirements",
+      "mapping": "NIST SC-13 / ISO27001 A.10.1.1 / GDPR Art. 32"
+    },
+    {
+      "control": "Cloud Audit Logs Configuration",
+      "control_id": "LOG-01",
+      "status": "FAIL",
+      "risk": "CRITICAL",
+      "evidence": "0 audit config(s). Data Read: disabled. Data Write: disabled",
+      "recommendation": "Enable Admin Activity and Data Access audit logs for all services",
+      "mapping": "NIST AU-2 / ISO27001 A.12.4.1 / DORA"
+    },
+    {
+      "control": "Cloud Logging Sink Configuration",
+      "control_id": "LOG-02",
+      "status": "PASS",
+      "risk": "LOW",
+      "evidence": "2 log sink(s) configured: _Required, _Default",
+      "recommendation": "Continue monitoring log sink configuration",
+      "mapping": "NIST AU-2 / ISO27001 A.12.4.1"
+    },
+    {
+      "control": "Unrestricted SSH Firewall Access",
+      "control_id": "NET-01",
+      "status": "FAIL",
+      "risk": "CRITICAL",
+      "evidence": "1 firewall rule(s) allow unrestricted SSH (0.0.0.0/0 port 22): default-allow-ssh",
+      "recommendation": "Restrict SSH firewall rules to specific IP ranges; use Cloud IAP for bastion access",
+      "mapping": "NIST SC-7 / ISO27001 A.13.1.3 / DORA"
+    },
+    {
+      "control": "Unrestricted RDP Firewall Access",
+      "control_id": "NET-02",
+      "status": "FAIL",
+      "risk": "CRITICAL",
+      "evidence": "1 firewall rule(s) allow unrestricted RDP (0.0.0.0/0 port 3389): default-allow-rdp",
+      "recommendation": "Restrict RDP firewall rules to specific IP ranges",
+      "mapping": "NIST SC-7 / ISO27001 A.13.1.3 / DORA"
+    }
+  ]
+}
