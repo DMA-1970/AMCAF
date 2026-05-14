@@ -97,6 +97,21 @@ tr.fr td{background:#1a0d0d}
 .msg{text-align:center;padding:40px 20px;color:#8b949e;font-size:14px}
 .err{background:#3a1a1a;border:1px solid #da3633;border-radius:8px;padding:14px 18px;color:#f85149;font-size:13px;margin-bottom:20px}
 footer{margin-top:28px;font-size:11px;color:#484f58;text-align:center;padding-bottom:8px}
+
+.heatmap{background:#161b22;border:1px solid #30363d;border-radius:8px;overflow:hidden;margin-bottom:10px}
+.hm-table{width:100%;border-collapse:collapse;font-size:11px}
+.hm-th{background:#0d1117;color:#8b949e;font-size:11px;font-weight:500;padding:8px 14px;border-bottom:1px solid #30363d;border-right:1px solid #21262d;white-space:nowrap}
+.hm-domain{background:#0d1117;color:#8b949e;font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.06em;padding:8px 14px;border-bottom:1px solid #21262d;border-right:1px solid #30363d;white-space:nowrap;vertical-align:top}
+.hm-ctrl{padding:7px 14px;border-bottom:1px solid #21262d;border-right:1px solid #21262d;white-space:nowrap}
+.hm-ctrl-id{font-family:ui-monospace,monospace;font-size:10px;color:#e6edf3;display:inline-block;margin-right:6px}
+.hm-ctrl-label{font-size:11px;color:#8b949e}
+.hm-cell{text-align:center;padding:7px 10px;border-bottom:1px solid #21262d;border-right:1px solid #21262d}
+.hm-badge{font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px;display:inline-block;white-space:nowrap;letter-spacing:.02em}
+.hm-badge.mapped{background:#1a1a08;color:#e3b341;border:1px solid #7d6608}
+.hm-badge.implemented{background:#1c2128;color:#8b949e;border:1px solid #30363d}
+.hm-badge.pass{background:#1a3a2a;color:#3fb950;border:1px solid #2ea043}
+.hm-badge.fail{background:#3a1a1a;color:#f85149;border:1px solid #da3633}
+.hm-badge.error{background:#2a1a0a;color:#d29922;border:1px solid #9e6a03}
 </style>
 </head>
 
@@ -191,6 +206,16 @@ footer{margin-top:28px;font-size:11px;color:#484f58;text-align:center;padding-bo
   <span><span class="dot pass"></span>PASS — control satisfied</span>
   <span><span class="dot fail"></span>FAIL — misconfiguration detected</span>
   <span><span class="leg-org">ORG</span> — organisational-level control</span>
+</div>
+
+<div class="section-label">Control coverage &amp; live posture</div>
+<div id="heatmap"><div class="msg">Loading control posture…</div></div>
+<div class="legend" id="heatmap-legend" style="margin-bottom:14px;display:none">
+  <span><span class="hm-badge mapped">MAPPED</span>&nbsp;Framework taxonomy — not yet in engine</span>
+  <span><span class="hm-badge implemented">PENDING</span>&nbsp;Implemented — awaiting run</span>
+  <span><span class="hm-badge pass">PASS</span>&nbsp;Passed latest assessment</span>
+  <span><span class="hm-badge fail">FAIL</span>&nbsp;Failed latest assessment</span>
+  <span><span class="hm-badge error">ERROR</span>&nbsp;Check error / insufficient permissions</span>
 </div>
 
 <div class="section-label">Live governance assessments</div>
@@ -309,6 +334,85 @@ function runTotal(run){
 
 function runId(run){
   return run.run_id ?? run.id ?? run.number ?? 'N/A';
+}
+
+const PROVIDERS_LIST = ['AWS','Azure','GCP'];
+
+const CONTROL_TAXONOMY = [
+  ['IAM','IAM-01','MFA Enforcement',        ['AWS','Azure','GCP']],
+  ['IAM','IAM-02','User MFA Coverage',      ['AWS','Azure','GCP']],
+  ['IAM','IAM-03','Least Privilege',        ['AWS','Azure','GCP']],
+  ['IAM','IAM-04','Privileged Access',      ['AWS','Azure','GCP']],
+  ['ENC','ENC-01','Encryption at Rest',     ['AWS','Azure','GCP']],
+  ['ENC','ENC-02','Key Management',         ['AWS','Azure','GCP']],
+  ['ENC','ENC-03','Transport Encryption',   []],
+  ['LOG','LOG-01','Audit Logging',          ['AWS','Azure','GCP']],
+  ['LOG','LOG-02','Log Retention',          ['AWS','Azure','GCP']],
+  ['LOG','LOG-03','SIEM Integration',       []],
+  ['NET','NET-01','SSH Access Control',     ['AWS','Azure','GCP']],
+  ['NET','NET-02','RDP Access Control',     ['AWS','Azure','GCP']],
+  ['NET','NET-03','Network Segmentation',   []],
+  ['DAT','DAT-01','Data Classification',    []],
+  ['DAT','DAT-02','Data Retention Policy',  []],
+  ['INC','INC-01','Incident Response',      []],
+  ['RES','RES-01','Disaster Recovery',      []],
+  ['RES','RES-02','RTO / RPO Targets',      []],
+  ['RES','RES-03','Backup Verification',    []],
+  ['TPM','TPM-01','Third-Party Risk Mgmt',  []],
+];
+
+function renderHeatmap(awsData, azureData, gcpData){
+  const statusMap = {AWS:{},Azure:{},GCP:{}};
+  if(awsData)   awsData.findings.forEach(f   => { statusMap.AWS[f.control_id]   = f.status; });
+  if(azureData) azureData.findings.forEach(f => { statusMap.Azure[f.control_id] = f.status; });
+  if(gcpData)   gcpData.findings.forEach(f   => { statusMap.GCP[f.control_id]   = f.status; });
+
+  const LABELS = {mapped:'MAPPED',implemented:'PENDING',pass:'PASS',fail:'FAIL',error:'ERROR'};
+
+  function cellState(ctrlId, provider, implProviders){
+    if(!implProviders.includes(provider)) return 'mapped';
+    const s = statusMap[provider][ctrlId];
+    if(!s) return 'implemented';
+    if(s === 'PASS') return 'pass';
+    if(s === 'FAIL') return 'fail';
+    return 'error';
+  }
+
+  // Group by domain for rowspan
+  const domainMap = {};
+  CONTROL_TAXONOMY.forEach(([domain,id,name,providers]) => {
+    (domainMap[domain] = domainMap[domain] || []).push({id,name,providers});
+  });
+
+  const rows = Object.entries(domainMap).map(([domain,controls]) =>
+    controls.map((ctrl,i) => `
+      <tr>
+        ${i===0 ? `<td class="hm-domain" rowspan="${controls.length}">${domain}</td>` : ''}
+        <td class="hm-ctrl"><span class="hm-ctrl-id">${ctrl.id}</span><span class="hm-ctrl-label">${ctrl.name}</span></td>
+        ${PROVIDERS_LIST.map(p => {
+          const state = cellState(ctrl.id, p, ctrl.providers);
+          return `<td class="hm-cell"><span class="hm-badge ${state}">${LABELS[state]}</span></td>`;
+        }).join('')}
+      </tr>`
+    ).join('')
+  ).join('');
+
+  document.getElementById('heatmap').innerHTML = `
+    <div class="heatmap">
+      <table class="hm-table">
+        <thead>
+          <tr>
+            <th class="hm-th">Domain</th>
+            <th class="hm-th">Control</th>
+            <th class="hm-th" style="text-align:center">AWS</th>
+            <th class="hm-th" style="text-align:center">Azure</th>
+            <th class="hm-th" style="text-align:center">GCP</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+  document.getElementById('heatmap-legend').style.display = 'flex';
 }
 
 function bdg(cls,text){
@@ -631,6 +735,8 @@ async function init(){
     loadAzureAssessment(),
     loadGCPAssessment()
   ]);
+
+  renderHeatmap(awsData, azureData, gcpData);
 
   const {valid:standard,errors:stdErr} =
     await loadGroup(STANDARD_IDS,'grid-standard',false);
