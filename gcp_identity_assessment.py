@@ -598,7 +598,24 @@ class GCPGovernanceAssessment:
             print(f"Could not save report: {e}")
 
         self.append_to_history(report)
+        self.push_to_github(report)
         return report
+
+    def push_to_github(self, report):
+        import subprocess
+        from pathlib import Path
+        root  = Path(__file__).parent
+        files = ['results/gcp_assessment.json', 'results/history/history.json']
+        score = report.get('overall_score', 0)
+        date  = report.get('assessment_timestamp_utc', '')[:10]
+        msg   = f"chore: GCP live assessment {date} ({score}/100)"
+        try:
+            subprocess.run(['git', 'add'] + files, cwd=root, check=True)
+            subprocess.run(['git', 'commit', '-m', msg], cwd=root, check=True)
+            subprocess.run(['git', 'push', 'origin', 'main'], cwd=root, check=True)
+            print("Results pushed to GitHub.")
+        except subprocess.CalledProcessError as e:
+            print(f"WARNING: Could not push to GitHub: {e}")
 
     def run_assessment(self):
         print("AMCAF GCP Identity & Security Governance Assessment")

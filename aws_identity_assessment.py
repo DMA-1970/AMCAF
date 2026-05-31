@@ -589,7 +589,26 @@ class AWSGovernanceAssessment:
         # Append to history
         self.append_to_history(report)
 
+        # Push results to GitHub immediately
+        self.push_to_github(report)
+
         return report
+
+    def push_to_github(self, report):
+        import subprocess
+        from pathlib import Path
+        root = Path(__file__).parent
+        files = ['results/aws_assessment.json', 'results/history/history.json']
+        score = report.get('overall_score', 0)
+        date  = report.get('assessment_timestamp_utc', '')[:10]
+        msg   = f"chore: AWS live assessment {date} ({score}/100)"
+        try:
+            subprocess.run(['git', 'add'] + files, cwd=root, check=True)
+            subprocess.run(['git', 'commit', '-m', msg], cwd=root, check=True)
+            subprocess.run(['git', 'push', 'origin', 'main'], cwd=root, check=True)
+            print("Results pushed to GitHub.")
+        except subprocess.CalledProcessError as e:
+            print(f"WARNING: Could not push to GitHub: {e}")
 
 
 def main():
