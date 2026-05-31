@@ -107,7 +107,7 @@
 </footer>
 
 <script>
-const BASE = 'https://raw.githubusercontent.com/DMA-1970/AMCAF/main/results/';
+const BASE = 'results/';
 const SC_LABELS = {
   'sc-01':'SC-01 — Fully compliant baseline',
   'sc-02':'SC-02 — Over-privileged IAM (AWS) / MFA disabled (Azure)',
@@ -211,7 +211,17 @@ function togSc(id){
 
 async function init(){
   try{
-    const index = await fetchJSON(BASE+'history/index.json');
+    // Determine if running locally (file://) or via HTTP
+    const isLocal = window.location.protocol === 'file:';
+    let baseUrl = BASE;
+    
+    if(isLocal){
+      // For file:// protocol, resolve relative path to absolute file path
+      const currentDir = window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/'));
+      baseUrl = 'file://' + currentDir + '/results/';
+    }
+
+    const index = await fetchJSON(baseUrl+'history/index.json');
 
     document.getElementById('summary-bar').innerHTML=`
       <div class="sum-card"><div class="val">${index.length}</div><div class="lbl">Total runs</div></div>
@@ -227,7 +237,7 @@ async function init(){
 
     const cards = await Promise.all(index.map(async(entry,i)=>{
       try{
-        const full = await fetchJSON(BASE+'history/'+entry.file);
+        const full = await fetchJSON(baseUrl+'history/'+entry.file);
         return buildHistCard(full, i);
       }catch(_){
         return buildHistCard(entry, i);
@@ -236,9 +246,10 @@ async function init(){
 
     document.getElementById('history-grid').innerHTML = cards.join('');
 
-  }catch(_){
+  }catch(e){
+    console.error('Failed to load history:', e);
     document.getElementById('history-grid').innerHTML=
-      '<div class="empty">No history found. Run a simulation to start recording history.</div>';
+      '<div class="empty">No history found. Run a simulation to start recording history. (Error: '+e.message+')</div>';
   }
 }
 
