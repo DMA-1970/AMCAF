@@ -48,7 +48,11 @@ class AWSGovernanceAssessment:
         """IAM-02: IAM users have MFA enabled"""
         try:
             iam = self.session.client('iam')
-            users = iam.list_users()['Users']
+            # C-04: paginate — list_users caps at 100 without a paginator
+            paginator = iam.get_paginator('list_users')
+            users = []
+            for page in paginator.paginate():
+                users.extend(page['Users'])
             
             total_users = len(users)
             users_with_mfa = 0
@@ -362,10 +366,11 @@ class AWSGovernanceAssessment:
             for sg in security_groups:
                 for rule in sg.get('IpPermissions', []):
                     if rule.get('FromPort') == 22 or rule.get('ToPort') == 22:
-                        for ip_range in rule.get('IpRanges', []):
-                            if ip_range.get('CidrIp') == '0.0.0.0/0':
-                                risky_groups.append(sg['GroupId'])
-                                break
+                        open_ipv4 = any(r.get('CidrIp') == '0.0.0.0/0' for r in rule.get('IpRanges', []))
+                        open_ipv6 = any(r.get('CidrIpv6') == '::/0' for r in rule.get('Ipv6Ranges', []))
+                        if open_ipv4 or open_ipv6:
+                            risky_groups.append(sg['GroupId'])
+                            break
             
             self.summary['total_security_groups'] = len(security_groups)
             self.summary['ssh_open_security_groups'] = len(risky_groups)
@@ -408,10 +413,11 @@ class AWSGovernanceAssessment:
             for sg in security_groups:
                 for rule in sg.get('IpPermissions', []):
                     if rule.get('FromPort') == 3389 or rule.get('ToPort') == 3389:
-                        for ip_range in rule.get('IpRanges', []):
-                            if ip_range.get('CidrIp') == '0.0.0.0/0':
-                                risky_groups.append(sg['GroupId'])
-                                break
+                        open_ipv4 = any(r.get('CidrIp') == '0.0.0.0/0' for r in rule.get('IpRanges', []))
+                        open_ipv6 = any(r.get('CidrIpv6') == '::/0' for r in rule.get('Ipv6Ranges', []))
+                        if open_ipv4 or open_ipv6:
+                            risky_groups.append(sg['GroupId'])
+                            break
             
             self.summary['rdp_open_security_groups'] = len(risky_groups)
             
@@ -453,7 +459,7 @@ class AWSGovernanceAssessment:
             history_file = history_dir / 'history.json'
 
             if history_file.exists():
-                with open(history_file, 'r') as f:
+                with open(history_file, 'r', encoding='utf-8') as f:
                     history = json.load(f)
             else:
                 history = []
@@ -470,13 +476,13 @@ class AWSGovernanceAssessment:
 
             history.append(history_entry)
 
-            with open(history_file, 'w') as f:
+            with open(history_file, 'w', encoding='utf-8') as f:
                 json.dump(history, f, indent=2)
 
-            print(f"✅ History updated: {history_file}")
+            print(f"History updated: {history_file}")
 
         except Exception as e:
-            print(f"⚠ Could not update history: {e}")
+            print(f"WARNING: Could not update history: {e}")
 
     def calculate_overall_score(self):
         """Calculate overall governance score"""
@@ -493,7 +499,7 @@ class AWSGovernanceAssessment:
     
     def run_assessment(self):
         """Run all governance checks"""
-        print("🔍 AMCAF AWS Governance Assessment")
+        print("AMCAF AWS Governance Assessment")
         print("=" * 50)
         
         try:
@@ -501,18 +507,19 @@ class AWSGovernanceAssessment:
             sts = self.session.client('sts')
             identity = sts.get_caller_identity()
             account_id = identity['Account']
+            self.summary['account_id'] = account_id  # M-04
             print(f"Account ID: {account_id}")
             print(f"Region: {self.session.region_name or 'default'}")
             print()
         except NoCredentialsError:
-            print("❌ ERROR: No AWS credentials configured")
+            print("ERROR: No AWS credentials configured")
             print("Configure credentials using:")
             print("  - AWS CLI: aws configure")
             print("  - Environment variables: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY")
             print("  - IAM role (if running on EC2)")
             sys.exit(1)
         except Exception as e:
-            print(f"❌ ERROR: {str(e)}")
+            print(f"ERROR: {str(e)}")
             sys.exit(1)
         
         checks = [
@@ -532,9 +539,9 @@ class AWSGovernanceAssessment:
             print(f"Checking: {name}...", end=" ")
             try:
                 check_func()
-                print("✓")
+                print("OK")
             except Exception as e:
-                print(f"⚠ {str(e)}")
+                print(f"WARN: {str(e)}")
         
         print()
         print("Assessment complete!")

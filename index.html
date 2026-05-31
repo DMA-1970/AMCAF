@@ -367,7 +367,7 @@ function renderHeatmap(awsData, azureData, gcpData){
   if(azureData) azureData.findings.forEach(f => { statusMap.Azure[f.control_id] = f.status; });
   if(gcpData)   gcpData.findings.forEach(f   => { statusMap.GCP[f.control_id]   = f.status; });
 
-  const LABELS = {mapped:'MAPPED',implemented:'PENDING',pass:'PASS',fail:'FAIL',error:'ERROR'};
+  const HM_LABELS = {mapped:'MAPPED',implemented:'PENDING',pass:'PASS',fail:'FAIL',error:'ERROR'};
 
   function cellState(ctrlId, provider, implProviders){
     if(!implProviders.includes(provider)) return 'mapped';
@@ -391,7 +391,7 @@ function renderHeatmap(awsData, azureData, gcpData){
         <td class="hm-ctrl"><span class="hm-ctrl-id">${ctrl.id}</span><span class="hm-ctrl-label">${ctrl.name}</span></td>
         ${PROVIDERS_LIST.map(p => {
           const state = cellState(ctrl.id, p, ctrl.providers);
-          return `<td class="hm-cell"><span class="hm-badge ${state}">${LABELS[state]}</span></td>`;
+          return `<td class="hm-cell"><span class="hm-badge ${state}">${HM_LABELS[state]}</span></td>`;
         }).join('')}
       </tr>`
     ).join('')
@@ -715,11 +715,13 @@ async function loadGroup(ids,targetId,isCustom=false){
     return {valid:[],errors};
   }
 
+  // M-01: map over the original results array (preserving original indices)
+  // so ids[index] stays aligned even when some scenarios 404'd
   document.getElementById(targetId).innerHTML =
-    valid.map((data,index) => {
-      const id = ids[index];
-      return card(data,id,id,isCustom);
-    }).join('');
+    results
+      .map((data, index) => data ? card(data, ids[index], ids[index], isCustom) : null)
+      .filter(Boolean)
+      .join('');
 
   return {valid,errors};
 }

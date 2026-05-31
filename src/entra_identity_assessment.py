@@ -455,13 +455,14 @@ class EntraGovernanceAssessment:
 
     def append_to_history(self, report):
         try:
-            history_dir = Path("results/history")
+            # M-09: use __file__ so this works regardless of working directory
+            history_dir = Path(__file__).parent.parent / "results" / "history"
             history_dir.mkdir(parents=True, exist_ok=True)
             history_file = history_dir / "history.json"
 
             history = []
             if history_file.exists():
-                with open(history_file) as f:
+                with open(history_file, encoding='utf-8') as f:
                     history = json.load(f)
 
             history.append({
@@ -474,7 +475,7 @@ class EntraGovernanceAssessment:
                 "compliance_rate": float(report["overall_score"]),
             })
 
-            with open(history_file, "w") as f:
+            with open(history_file, "w", encoding='utf-8') as f:
                 json.dump(history, f, indent=2)
             print(f"History updated: {history_file}")
         except Exception as e:
@@ -512,9 +513,13 @@ class EntraGovernanceAssessment:
         }
 
         try:
-            with open("results/entra_assessment.json", "w") as f:
+            # M-09: resolve path relative to this file, not the working directory
+            results_dir = Path(__file__).parent.parent / "results"
+            results_dir.mkdir(parents=True, exist_ok=True)
+            report_path = results_dir / "entra_assessment.json"
+            with open(report_path, "w", encoding='utf-8') as f:
                 json.dump(report, f, indent=2)
-            print(f"\nReport saved: results/entra_assessment.json")
+            print(f"\nReport saved: {report_path}")
         except Exception as e:
             print(f"\nCould not save report: {e}")
 

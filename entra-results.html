@@ -274,11 +274,9 @@ function getScoreClass(score){
   return 'low';
 }
 
-async function loadSecureScore(){
+// M-03: renderSecureScore takes already-fetched data — no second network call
+function renderSecureScore(assessment){
   try{
-    const assessment = await fetchJSON(BASE + 'entra_assessment.json');
-    
-    // Use overall_score from the assessment
     const overallScore = assessment.overall_score || 0;
     const summary = assessment.summary || {};
     
@@ -315,13 +313,14 @@ async function loadSecureScore(){
       document.getElementById('score-bars').innerHTML = barsHTML;
     }
   }catch(e){
-    console.log('Overall score not available:', e);
+    console.log('Score render error:', e);
   }
 }
 
 async function loadLatestAssessment(){
   try{
     const data = await fetchJSON(BASE + 'entra_assessment.json');
+    renderSecureScore(data);
     const timestamp = data.assessment_timestamp_utc || '';
     const overallScore = data.overall_score || 0;
     const summary = data.summary || {};
@@ -536,7 +535,7 @@ async function loadHistory(){
               <td>${run.total_checks || 0}</td>
               <td><span class="sp">${run.passed || 0}</span></td>
               <td><span class="sf">${run.failed || 0}</span></td>
-              <td>${(run.compliance_rate || 0).toFixed(1)}%</td>
+              <td>${Number(run.compliance_rate || 0).toFixed(1)}%</td>
             </tr>
           `).join('')}
         </tbody>
@@ -559,7 +558,6 @@ async function loadHistory(){
 async function init(){
   try{
     await loadLatestAssessment();
-    await loadSecureScore();
     await loadHistory();
   }catch(e){
     console.error('Initialization error:', e);

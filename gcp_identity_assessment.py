@@ -18,7 +18,6 @@ except ImportError:
 import json
 import os
 import sys
-import warnings
 import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 import requests as _requests_lib
@@ -318,6 +317,8 @@ class GCPGovernanceAssessment:
             compute = self._svc("compute")
             zones_result = compute.zones().list(project=self.project_id).execute()
             zones = [z["name"] for z in zones_result.get("items", [])]
+            if len(zones) > 10:
+                print(f"Note: Checking disks in first 10 of {len(zones)} zones")
 
             total_disks = 0
             cmek_disks = 0
@@ -338,17 +339,30 @@ class GCPGovernanceAssessment:
             self.summary["total_persistent_disks"] = total_disks
             self.summary["cmek_disks"] = cmek_disks
 
-            evidence = f"{total_disks} persistent disk(s). All encrypted at rest by Google default encryption"
-            if cmek_disks:
-                evidence += f". {cmek_disks} with customer-managed keys (CMEK)"
+            # GCP always encrypts at rest by default; CMEK is an additional control.
+            # PASS with LOW risk when CMEK is in use or no disks exist.
+            # PASS with MEDIUM risk when disks exist but rely on Google-managed keys only.
+            if total_disks == 0 or cmek_disks > 0:
+                status, risk = "PASS", "LOW"
+                evidence = (
+                    f"{total_disks} persistent disk(s). "
+                    + (f"{cmek_disks} protected by customer-managed keys (CMEK)." if cmek_disks else
+                       "Google-managed encryption active on all disks.")
+                )
+            else:
+                status, risk = "PASS", "MEDIUM"
+                evidence = (
+                    f"{total_disks} persistent disk(s) encrypted by Google-managed keys. "
+                    "No CMEK configured — consider CMEK for regulatory key-control requirements."
+                )
 
             self.findings.append({
                 "control": "Persistent Disk Encryption",
                 "control_id": "ENC-02",
-                "status": "PASS",
-                "risk": "LOW",
+                "status": status,
+                "risk": risk,
                 "evidence": evidence,
-                "recommendation": "Consider CMEK for workloads with regulatory key-control requirements",
+                "recommendation": "Enable CMEK via Cloud KMS for workloads requiring key-control compliance" if risk == "MEDIUM" else "Continue monitoring disk encryption",
                 "mapping": "NIST SC-13 / ISO27001 A.10.1.1 / GDPR Art. 32",
             })
         except Exception as e:
@@ -537,7 +551,7 @@ class GCPGovernanceAssessment:
 
             history = []
             if history_file.exists():
-                with open(history_file) as f:
+                with open(history_file, encoding='utf-8') as f:
                     history = json.load(f)
 
             history.append({
@@ -550,7 +564,7 @@ class GCPGovernanceAssessment:
                 "compliance_rate": float(report["overall_score"]),
             })
 
-            with open(history_file, "w") as f:
+            with open(history_file, "w", encoding='utf-8') as f:
                 json.dump(history, f, indent=2)
             print(f"History updated: {history_file}")
         except Exception as e:

@@ -162,7 +162,7 @@ python gcp_identity_assessment.py</pre>
     <div>Project: <span class="val" id="project-id">—</span></div>
     <div>Source: <span class="val">GCP Cloud APIs</span></div>
   </div>
-  <div><span id="assessment-status">—</span></div>
+  <div class="right"><span id="assessment-status">—</span></div>
 </div>
 
 <div id="score-hero" class="score-hero" style="display:none">
@@ -385,24 +385,16 @@ async function loadHistory(){
     if(recent.length>=2){
       const lat  = recent[recent.length-1];
       const prev = recent[recent.length-2];
-      const diff = (lat.compliance_rate||0)-(prev.compliance_rate||0);
+      const diff = (Number(lat.compliance_rate)||0)-(Number(prev.compliance_rate)||0);
       document.getElementById('trend-note').textContent = diff>0
-        ?`Compliance improved by ${diff.toFixed(1)} percentage points.`
+        ?`▲ Compliance improved by ${diff.toFixed(1)} percentage points.`
         :diff<0
-          ?`Compliance declined by ${Math.abs(diff).toFixed(1)} percentage points.`
+          ?`▼ Compliance declined by ${Math.abs(diff).toFixed(1)} percentage points.`
           :'Compliance unchanged from previous assessment.';
     }else{
       document.getElementById('trend-note').textContent = 'First recorded GCP assessment.';
     }
-
-    document.getElementById('key-metrics').innerHTML = `
-      <div style="display:flex;flex-direction:column;gap:8px">
-        <div><strong>Total assessments:</strong> ${gcpRuns.length}</div>
-        <div><strong>Latest run:</strong> ${formatDate(gcpRuns[0].timestamp)}</div>
-        <div><strong>Current compliance:</strong> ${(gcpRuns[0].compliance_rate||0).toFixed(1)}%</div>
-        <div><strong>Checks performed:</strong> ${gcpRuns[0].total_checks||0}</div>
-        <div><strong>Pass rate:</strong> ${gcpRuns[0].passed||0} / ${gcpRuns[0].total_checks||0}</div>
-      </div>`;
+    // M-02: do NOT overwrite key-metrics here — loadLatestAssessment already set it
 
     document.getElementById('history-panel').innerHTML = `
       <table>
@@ -418,7 +410,7 @@ async function loadHistory(){
               <td>${run.total_checks||0}</td>
               <td><span class="sp">${run.passed||0}</span></td>
               <td><span class="sf">${run.failed||0}</span></td>
-              <td>${(run.compliance_rate||0).toFixed(1)}%</td>
+              <td>${Number(run.compliance_rate||0).toFixed(1)}%</td>
             </tr>`).join('')}
         </tbody>
       </table>`;

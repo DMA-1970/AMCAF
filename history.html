@@ -107,149 +107,94 @@
 </footer>
 
 <script>
-const BASE = 'results/';
+// C-01: reads history/history.json (flat schema) not history/index.json (old CI schema)
+const BASE = 'https://raw.githubusercontent.com/DMA-1970/AMCAF/main/results/';
+
 const SC_LABELS = {
-  'sc-01':'SC-01 — Fully compliant baseline',
-  'sc-02':'SC-02 — Over-privileged IAM (AWS) / MFA disabled (Azure)',
-  'sc-03':'SC-03 — Encryption disabled (AWS) / Weak TLS (Azure) / Public bucket (GCP)',
-  'sc-04':'SC-04 — Logging disabled across all providers',
-  'sc-05':'SC-05 — Open SSH (AWS) / Permissive firewall (GCP)',
-  'sc-06':'SC-06 — Dormant accounts (AWS, GCP) / Insufficient log retention (AWS, Azure)',
-  'sc-07': 'SC-07 — Full 15-control compliant baseline',
-'sc-08': 'SC-08 — Full 15-control failure scenario (all new controls failing)',
+  'sc-01':    'SC-01 — Fully compliant baseline',
+  'sc-02':    'SC-02 — Over-privileged IAM (AWS) / MFA disabled (Azure)',
+  'sc-03':    'SC-03 — Encryption disabled (AWS) / Weak TLS (Azure) / Public bucket (GCP)',
+  'sc-04':    'SC-04 — Logging disabled across all providers',
+  'sc-05':    'SC-05 — Open SSH (AWS) / Permissive firewall (GCP)',
+  'sc-06':    'SC-06 — Dormant accounts (AWS, GCP) / Insufficient log retention',
+  'sc-07':    'SC-07 — Full 20-control compliant baseline',
+  'sc-08':    'SC-08 — Full 20-control failure scenario',
+  'live-aws':   'AWS — Live Identity & Security Assessment',
+  'live-entra': 'Azure — Live Entra Identity Governance',
+  'live-gcp':   'GCP — Live Identity & Security Assessment',
+  'baseline':   'Multi-provider baseline assessment',
+};
+
+const PROVIDER_COLOURS = {
+  'live-aws': '#3fb950', 'live-entra': '#58a6ff', 'live-gcp': '#ffa657',
 };
 
 async function fetchJSON(url){
-  const r = await fetch(url+'?nc='+Date.now());
-  if(!r.ok) throw new Error(r.status);
+  const r = await fetch(url + '?nc=' + Date.now());
+  if(!r.ok) throw new Error('HTTP ' + r.status);
   return r.json();
 }
 
-function badge(cls,txt){return `<span class="badge ${cls}">${txt}</span>`}
-function prov(p){return `<span class="prov ${p.toLowerCase()}">${p}</span>`}
-function rateClass(r){const n=parseFloat(r);return n===100?'perfect':n>=80?'rate':'fail'}
+function badge(cls, txt){ return `<span class="badge ${cls}">${txt}</span>`; }
+function rateClass(r){ const n = parseFloat(r); return n === 100 ? 'perfect' : n >= 80 ? 'rate' : 'fail'; }
 
-function buildFindingsTable(findings){
-  const rows = findings.map(f=>`
-    <tr class="${f.status==='FAIL'?'fail-row':''}">
-      <td><span class="ctrl">${f.control_id}</span></td>
-      <td>${prov(f.provider)}</td>
-      <td><span class="s-${f.status.toLowerCase()}">${f.status}</span></td>
-      <td class="${f.status==='FAIL'?'detail-fail':'detail-pass'}">${f.detail}</td>
-      <td><div class="refs">${f.regulatory_refs.join('<br>')}</div></td>
-      <td><span class="attr">${f.config_attribute}</span></td>
-    </tr>`).join('');
-  return `<table>
-    <thead><tr>
-      <th>Control</th><th>Provider</th><th>Status</th>
-      <th>Finding</th><th>Regulatory refs</th><th>Config attribute</th>
-    </tr></thead>
-    <tbody>${rows}</tbody>
-  </table>`;
-}
-
-function buildHistCard(entry, cardIdx){
-  const s  = entry.summary;
-  const rc = rateClass(s.compliance_rate);
-  const ts = new Date(entry.timestamp).toLocaleString();
-
-  const scRows = (entry.scenarios||[]).map((sc, si)=>{
-    const m   = sc.report_metadata;
-    const src = rateClass(m.compliance_rate);
-    const scId = `sc-0${si+1}`;
-    const label = SC_LABELS[scId] || scId;
-    return `
-      <div class="sc-row">
-        <div class="sc-row-header" onclick="togSc('${cardIdx}-${si}')">
-          <span class="sc-row-title">${label}</span>
-          <div class="sc-row-badges">
-            ${badge('pass', m.passed+' pass')}
-            ${m.failed>0?badge('fail',m.failed+' fail'):''}
-            ${badge(src, m.compliance_rate)}
-          </div>
-          <span class="sc-row-chevron" id="schev-${cardIdx}-${si}">&#9654;</span>
-        </div>
-        <div class="sc-findings" id="scbody-${cardIdx}-${si}">
-          ${buildFindingsTable(sc.findings||[])}
-        </div>
-      </div>`;
-  }).join('');
+function buildHistCard(entry, idx){
+  const rate   = Number(entry.compliance_rate || 0);
+  const rc     = rateClass(rate);
+  const ts     = entry.timestamp ? new Date(entry.timestamp).toLocaleString() : '—';
+  const scenario = entry.scenario || '—';
+  const label    = SC_LABELS[scenario] || scenario;
+  const colour   = PROVIDER_COLOURS[scenario] || '#8b949e';
 
   return `
     <div class="hist-card">
-      <div class="hist-header" onclick="togHist(${cardIdx})">
-        <span class="hist-run">#${entry.run_number}</span>
+      <div class="hist-header">
+        <span class="hist-run" style="border-left:3px solid ${colour};padding-left:8px">${entry.run_id || ('RUN-' + (idx+1))}</span>
         <div class="hist-meta">
-          <div class="hist-title">${entry.scenario} &nbsp;·&nbsp; ${ts}</div>
-          <div class="hist-sub">Triggered by ${entry.triggered_by} &nbsp;·&nbsp;
-            <a href="${entry.run_url}" target="_blank" rel="noopener" onclick="event.stopPropagation()">view log →</a>
-          </div>
+          <div class="hist-title">${label}</div>
+          <div class="hist-sub">${ts} &nbsp;·&nbsp; ${entry.total_checks || 0} checks</div>
         </div>
         <div class="hist-badges">
-          ${badge('pass', s.passed+' pass')}
-          ${s.failed>0?badge('fail',s.failed+' fail'):''}
-          ${badge(rc, s.compliance_rate)}
-        </div>
-        <span class="chevron" id="chev-${cardIdx}">&#9654;</span>
-      </div>
-      <div class="hist-body" id="body-${cardIdx}">
-        <div class="hist-scenarios">
-          ${scRows||'<div style="color:#8b949e;font-size:12px;padding:8px">No scenario detail for this run.</div>'}
+          ${badge('pass', (entry.passed || 0) + ' pass')}
+          ${(entry.failed || 0) > 0 ? badge('fail', entry.failed + ' fail') : ''}
+          ${badge(rc, rate.toFixed(1) + '%')}
         </div>
       </div>
     </div>`;
 }
 
-function togHist(i){
-  document.getElementById('body-'+i).classList.toggle('open');
-  document.getElementById('chev-'+i).classList.toggle('open');
-}
-function togSc(id){
-  document.getElementById('scbody-'+id).classList.toggle('open');
-  document.getElementById('schev-'+id).classList.toggle('open');
-}
-
 async function init(){
   try{
-    // Determine if running locally (file://) or via HTTP
-    const isLocal = window.location.protocol === 'file:';
-    let baseUrl = BASE;
-    
-    if(isLocal){
-      // For file:// protocol, resolve relative path to absolute file path
-      const currentDir = window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/'));
-      baseUrl = 'file://' + currentDir + '/results/';
-    }
+    const raw     = await fetchJSON(BASE + 'history/history.json');
+    const entries = (Array.isArray(raw) ? raw : (raw.runs || []))
+      .slice()
+      .sort((a,b) => new Date(b.timestamp||0) - new Date(a.timestamp||0));
 
-    const index = await fetchJSON(baseUrl+'history/index.json');
+    const latest    = entries[0];
+    const awsRuns   = entries.filter(e => (e.scenario||'').includes('aws'));
+    const entraRuns = entries.filter(e => (e.scenario||'').includes('entra'));
+    const gcpRuns   = entries.filter(e => (e.scenario||'').includes('gcp'));
 
-    document.getElementById('summary-bar').innerHTML=`
-      <div class="sum-card"><div class="val">${index.length}</div><div class="lbl">Total runs</div></div>
-      <div class="sum-card"><div class="val">${index.filter(e=>e.scenario==='ALL').length}</div><div class="lbl">Full runs (ALL)</div></div>
-      <div class="sum-card"><div class="val">${index[0]?new Date(index[0].timestamp).toLocaleDateString():'—'}</div><div class="lbl">Latest run</div></div>
-      <div class="sum-card"><div class="val">${index[0]?index[0].summary.compliance_rate:'—'}</div><div class="lbl">Latest compliance</div></div>`;
+    document.getElementById('summary-bar').innerHTML = `
+      <div class="sum-card"><div class="val">${entries.length}</div><div class="lbl">Total runs</div></div>
+      <div class="sum-card"><div class="val" style="color:#3fb950">${awsRuns.length}</div><div class="lbl">AWS runs</div></div>
+      <div class="sum-card"><div class="val" style="color:#58a6ff">${entraRuns.length}</div><div class="lbl">Azure runs</div></div>
+      <div class="sum-card"><div class="val" style="color:#ffa657">${gcpRuns.length}</div><div class="lbl">GCP runs</div></div>
+      <div class="sum-card"><div class="val">${latest ? new Date(latest.timestamp).toLocaleDateString() : '—'}</div><div class="lbl">Latest run</div></div>
+      <div class="sum-card"><div class="val">${latest ? Number(latest.compliance_rate||0).toFixed(1)+'%' : '—'}</div><div class="lbl">Latest compliance</div></div>`;
 
-    if(!index.length){
-      document.getElementById('history-grid').innerHTML=
-        '<div class="empty">No runs recorded yet. Trigger the workflow to start building history.</div>';
+    if(!entries.length){
+      document.getElementById('history-grid').innerHTML =
+        '<div class="empty">No runs recorded yet. Run an assessment to start building history.</div>';
       return;
     }
 
-    const cards = await Promise.all(index.map(async(entry,i)=>{
-      try{
-        const full = await fetchJSON(baseUrl+'history/'+entry.file);
-        return buildHistCard(full, i);
-      }catch(_){
-        return buildHistCard(entry, i);
-      }
-    }));
+    document.getElementById('history-grid').innerHTML = entries.map((e,i) => buildHistCard(e,i)).join('');
 
-    document.getElementById('history-grid').innerHTML = cards.join('');
-
-  }catch(e){
-    console.error('Failed to load history:', e);
-    document.getElementById('history-grid').innerHTML=
-      '<div class="empty">No history found. Run a simulation to start recording history. (Error: '+e.message+')</div>';
+  }catch(err){
+    console.error('Failed to load history:', err);
+    document.getElementById('history-grid').innerHTML =
+      '<div class="empty">Unable to load history. (Error: ' + err.message + ')</div>';
   }
 }
 

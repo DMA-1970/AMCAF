@@ -1,14 +1,5 @@
 [
   {
-    "run_id": "RUN-2026-05-12-001",
-    "timestamp": "2026-05-12T18:00:00Z",
-    "scenario": "baseline",
-    "total_checks": 96,
-    "passed": 81,
-    "failed": 15,
-    "compliance_rate": 84.4
-  },
-  {
     "run_id": "AWS-2026-05-14-211709",
     "timestamp": "2026-05-14T21:17:09.757343+00:00",
     "scenario": "live-aws",
@@ -65,6 +56,78 @@
   {
     "run_id": "GCP-2026-05-14-223805",
     "timestamp": "2026-05-14T22:38:05.335015+00:00",
+    "scenario": "live-gcp",
+    "total_checks": 10,
+    "passed": 6,
+    "failed": 4,
+    "compliance_rate": 60.0
+  },
+  {
+    "run_id": "GCP-2026-05-14-223931",
+    "timestamp": "2026-05-14T22:39:21.790803+00:00",
+    "scenario": "live-gcp",
+    "total_checks": 10,
+    "passed": 6,
+    "failed": 4,
+    "compliance_rate": 60.0
+  },
+  {
+    "run_id": "AWS-2026-05-14-224255",
+    "timestamp": "2026-05-14T22:42:55.333297+00:00",
+    "scenario": "live-aws",
+    "total_checks": 10,
+    "passed": 7,
+    "failed": 3,
+    "compliance_rate": 70.0
+  },
+  {
+    "run_id": "ENTRA-2026-05-31-115922",
+    "timestamp": "2026-05-31T11:59:22.273370+00:00",
+    "scenario": "live-entra",
+    "total_checks": 10,
+    "passed": 7,
+    "failed": 3,
+    "compliance_rate": 70.0
+  },
+  {
+    "run_id": "AWS-2026-05-31-120227",
+    "timestamp": "2026-05-31T12:02:27.517163+00:00",
+    "scenario": "live-aws",
+    "total_checks": 10,
+    "passed": 7,
+    "failed": 3,
+    "compliance_rate": 70.0
+  },
+  {
+    "run_id": "GCP-2026-05-31-120327",
+    "timestamp": "2026-05-31T12:03:26.948322+00:00",
+    "scenario": "live-gcp",
+    "total_checks": 10,
+    "passed": 6,
+    "failed": 4,
+    "compliance_rate": 60.0
+  },
+  {
+    "run_id": "ENTRA-2026-05-31-123130",
+    "timestamp": "2026-05-31T12:31:30.382203+00:00",
+    "scenario": "live-entra",
+    "total_checks": 10,
+    "passed": 7,
+    "failed": 3,
+    "compliance_rate": 70.0
+  },
+  {
+    "run_id": "AWS-2026-05-31-123154",
+    "timestamp": "2026-05-31T12:31:54.848726+00:00",
+    "scenario": "live-aws",
+    "total_checks": 10,
+    "passed": 7,
+    "failed": 3,
+    "compliance_rate": 70.0
+  },
+  {
+    "run_id": "GCP-2026-05-31-123216",
+    "timestamp": "2026-05-31T12:32:16.398502+00:00",
     "scenario": "live-gcp",
     "total_checks": 10,
     "passed": 6,
