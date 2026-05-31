@@ -1,6 +1,6 @@
 {
   "assessment_name": "AMCAF GCP Identity & Security Assessment",
-  "assessment_timestamp_utc": "2026-05-31T12:32:16.398502+00:00",
+  "assessment_timestamp_utc": "2026-05-31T19:31:13.896514+00:00",
   "project_id": "project-620345d3-ff8a-48a8-a0f",
   "overall_score": 60,
   "summary": {
@@ -76,8 +76,8 @@
       "control_id": "ENC-02",
       "status": "PASS",
       "risk": "LOW",
-      "evidence": "0 persistent disk(s). All encrypted at rest by Google default encryption",
-      "recommendation": "Consider CMEK for workloads with regulatory key-control requirements",
+      "evidence": "0 persistent disk(s). Google-managed encryption active on all disks.",
+      "recommendation": "Continue monitoring disk encryption",
       "mapping": "NIST SC-13 / ISO27001 A.10.1.1 / GDPR Art. 32"
     },
     {

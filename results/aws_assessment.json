@@ -1,8 +1,9 @@
 {
   "assessment_name": "AMCAF AWS Identity & Security Assessment",
-  "assessment_timestamp_utc": "2026-05-31T12:31:54.848726+00:00",
+  "assessment_timestamp_utc": "2026-05-31T19:30:15.419995+00:00",
   "overall_score": 70,
   "summary": {
+    "account_id": "756454231739",
     "total_iam_users": 2,
     "users_with_mfa": 1,
     "users_without_mfa": 1,

@@ -133,5 +133,32 @@
     "passed": 6,
     "failed": 4,
     "compliance_rate": 60.0
+  },
+  {
+    "run_id": "AWS-2026-05-31-193015",
+    "timestamp": "2026-05-31T19:30:15.419995+00:00",
+    "scenario": "live-aws",
+    "total_checks": 10,
+    "passed": 7,
+    "failed": 3,
+    "compliance_rate": 70.0
+  },
+  {
+    "run_id": "ENTRA-2026-05-31-193045",
+    "timestamp": "2026-05-31T19:30:45.362521+00:00",
+    "scenario": "live-entra",
+    "total_checks": 10,
+    "passed": 7,
+    "failed": 3,
+    "compliance_rate": 70.0
+  },
+  {
+    "run_id": "GCP-2026-05-31-193113",
+    "timestamp": "2026-05-31T19:31:13.896514+00:00",
+    "scenario": "live-gcp",
+    "total_checks": 10,
+    "passed": 6,
+    "failed": 4,
+    "compliance_rate": 60.0
   }
 ]

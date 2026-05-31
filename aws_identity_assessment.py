@@ -6,20 +6,29 @@ Maps to AMCAF control framework: IAM, ENC, LOG, NET domains
 
 import boto3
 import json
+import ssl
+import urllib3
 from datetime import datetime, timezone
 from botocore.exceptions import ClientError, NoCredentialsError
 import sys
+
+# Corporate proxy intercepts SSL — disable verification globally for boto3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+ssl._create_default_https_context = ssl._create_unverified_context
 
 class AWSGovernanceAssessment:
     def __init__(self):
         self.session = boto3.Session()
         self.findings = []
         self.summary = {}
+
+    def _client(self, service):
+        return self.session.client(service, verify=False)
         
     def check_root_mfa(self):
         """IAM-01: Root account MFA enabled"""
         try:
-            iam = self.session.client('iam')
+            iam = self._client('iam')
             summary = iam.get_account_summary()
             
             mfa_enabled = summary['SummaryMap'].get('AccountMFAEnabled', 0) == 1
@@ -47,7 +56,7 @@ class AWSGovernanceAssessment:
     def check_iam_user_mfa(self):
         """IAM-02: IAM users have MFA enabled"""
         try:
-            iam = self.session.client('iam')
+            iam = self._client('iam')
             # C-04: paginate — list_users caps at 100 without a paginator
             paginator = iam.get_paginator('list_users')
             users = []
@@ -101,7 +110,7 @@ class AWSGovernanceAssessment:
     def check_overly_permissive_policies(self):
         """IAM-03: No overly permissive IAM policies"""
         try:
-            iam = self.session.client('iam')
+            iam = self._client('iam')
             policies = iam.list_policies(Scope='Local')['Policies']
             
             risky_policies = []
@@ -166,7 +175,7 @@ class AWSGovernanceAssessment:
     def check_password_policy(self):
         """IAM-04: IAM password policy meets requirements"""
         try:
-            iam = self.session.client('iam')
+            iam = self._client('iam')
             policy = iam.get_account_password_policy()['PasswordPolicy']
             
             requirements = {
@@ -210,7 +219,7 @@ class AWSGovernanceAssessment:
     def check_s3_encryption(self):
         """ENC-01: S3 buckets have encryption enabled"""
         try:
-            s3 = self.session.client('s3')
+            s3 = self._client('s3')
             buckets = s3.list_buckets()['Buckets']
             
             total_buckets = len(buckets)
@@ -258,7 +267,7 @@ class AWSGovernanceAssessment:
     def check_ebs_encryption(self):
         """ENC-02: EBS volumes are encrypted"""
         try:
-            ec2 = self.session.client('ec2')
+            ec2 = self._client('ec2')
             volumes = ec2.describe_volumes()['Volumes']
             
             total_volumes = len(volumes)
@@ -293,7 +302,7 @@ class AWSGovernanceAssessment:
     def check_cloudtrail(self):
         """LOG-01: CloudTrail enabled in all regions"""
         try:
-            cloudtrail = self.session.client('cloudtrail')
+            cloudtrail = self._client('cloudtrail')
             trails = cloudtrail.describe_trails()['trailList']
             
             multi_region_trails = [t for t in trails if t.get('IsMultiRegionTrail', False)]
@@ -327,7 +336,7 @@ class AWSGovernanceAssessment:
     def check_cloudwatch_logs(self):
         """LOG-02: CloudWatch logging configured"""
         try:
-            logs = self.session.client('logs')
+            logs = self._client('logs')
             log_groups = logs.describe_log_groups()['logGroups']
             
             self.summary['cloudwatch_log_groups'] = len(log_groups)
@@ -358,7 +367,7 @@ class AWSGovernanceAssessment:
     def check_unrestricted_ssh(self):
         """NET-01: No unrestricted SSH access"""
         try:
-            ec2 = self.session.client('ec2')
+            ec2 = self._client('ec2')
             security_groups = ec2.describe_security_groups()['SecurityGroups']
             
             risky_groups = []
@@ -405,7 +414,7 @@ class AWSGovernanceAssessment:
     def check_unrestricted_rdp(self):
         """NET-02: No unrestricted RDP access"""
         try:
-            ec2 = self.session.client('ec2')
+            ec2 = self._client('ec2')
             security_groups = ec2.describe_security_groups()['SecurityGroups']
             
             risky_groups = []
@@ -504,7 +513,7 @@ class AWSGovernanceAssessment:
         
         try:
             # Get account info
-            sts = self.session.client('sts')
+            sts = self._client('sts')
             identity = sts.get_caller_identity()
             account_id = identity['Account']
             self.summary['account_id'] = account_id  # M-04
@@ -573,9 +582,9 @@ class AWSGovernanceAssessment:
         try:
             with open('results/aws_assessment.json', 'w') as f:
                 json.dump(report, f, indent=2)
-            print(f"\n✅ Report saved: results/aws_assessment.json")
+            print(f"\nReport saved: results/aws_assessment.json")
         except Exception as e:
-            print(f"\n⚠ Could not save report: {e}")
+            print(f"\nWARNING: Could not save report: {e}")
 
         # Append to history
         self.append_to_history(report)
