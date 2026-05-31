@@ -205,5 +205,14 @@
     "passed": 7,
     "failed": 3,
     "compliance_rate": 70.0
+  },
+  {
+    "run_id": "GCP-2026-05-31-204105",
+    "timestamp": "2026-05-31T20:41:05.830080+00:00",
+    "scenario": "live-gcp",
+    "total_checks": 10,
+    "passed": 6,
+    "failed": 4,
+    "compliance_rate": 60.0
   }
 ]
