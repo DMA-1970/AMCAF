@@ -1,6 +1,6 @@
 {
   "assessment_name": "AMCAF Entra Identity Governance Assessment",
-  "assessment_timestamp_utc": "2026-05-31T22:01:47.866771+00:00",
+  "assessment_timestamp_utc": "2026-06-01T20:51:50.909399+00:00",
   "overall_score": 70,
   "summary": {
     "global_admin_count": 1,
@@ -12,7 +12,7 @@
     "named_locations": 0,
     "total_users": 24,
     "enabled_users": 24,
-    "guest_users": 2,
+    "guest_users": 3,
     "application_registrations": 7,
     "conditional_access_policies": 8,
     "enabled_conditional_access_policies": 8,
