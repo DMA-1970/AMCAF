@@ -1,7 +1,7 @@
 {
   "assessment_name": "AMCAF Entra Identity Governance Assessment",
-  "assessment_timestamp_utc": "2026-06-03T19:55:55.937456+00:00",
-  "overall_score": 70,
+  "assessment_timestamp_utc": "2026-06-03T20:01:08.489258+00:00",
+  "overall_score": 80,
   "summary": {
     "global_admin_count": 1,
     "total_privileged_assignments": 1,
@@ -9,7 +9,7 @@
     "apps_near_expiry": 0,
     "managed_identity_count": 0,
     "apps_with_long_lived_secrets": 0,
-    "named_locations": 0,
+    "named_locations": 1,
     "total_users": 24,
     "enabled_users": 24,
     "guest_users": 3,
@@ -17,8 +17,8 @@
     "conditional_access_policies": 8,
     "enabled_conditional_access_policies": 8,
     "total_checks": 10,
-    "passed": 7,
-    "failed": 3,
+    "passed": 8,
+    "failed": 2,
     "errors": 0
   },
   "findings": [
@@ -97,10 +97,10 @@
     {
       "control": "Named Location Network Controls",
       "control_id": "NET-01",
-      "status": "FAIL",
-      "risk": "MEDIUM",
-      "evidence": "0 named location(s) defined for network-based access control",
-      "recommendation": "Define named locations (trusted IPs/ranges) and reference them in Conditional Access policies",
+      "status": "PASS",
+      "risk": "LOW",
+      "evidence": "1 named location(s) defined for network-based access control: AMCAF - Monitored Office Network",
+      "recommendation": "Continue monitoring named location usage",
       "mapping": "NIST SC-7 / ISO27001 A.13.1.3 / DORA"
     },
     {
