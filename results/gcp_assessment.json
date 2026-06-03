@@ -1,8 +1,8 @@
 {
   "assessment_name": "AMCAF GCP Identity & Security Assessment",
-  "assessment_timestamp_utc": "2026-06-03T20:46:55.665806+00:00",
+  "assessment_timestamp_utc": "2026-06-03T20:49:26.151041+00:00",
   "project_id": "project-620345d3-ff8a-48a8-a0f",
-  "overall_score": 60,
+  "overall_score": 54,
   "summary": {
     "service_accounts": 2,
     "user_managed_keys": 0,
@@ -20,9 +20,10 @@
     "total_firewall_rules": 5,
     "ssh_open_rules": 1,
     "rdp_open_rules": 1,
-    "total_checks": 10,
+    "sensitive_port_exposures": 1,
+    "total_checks": 11,
     "passed": 6,
-    "failed": 4,
+    "failed": 5,
     "errors": 0
   },
   "findings": [
@@ -114,6 +115,15 @@
       "risk": "CRITICAL",
       "evidence": "1 firewall rule(s) allow unrestricted RDP (0.0.0.0/0 port 3389): default-allow-rdp",
       "recommendation": "Restrict RDP firewall rules to specific IP ranges",
+      "mapping": "NIST SC-7 / ISO27001 A.13.1.3 / DORA"
+    },
+    {
+      "control": "Sensitive Port Public Exposure",
+      "control_id": "NET-03",
+      "status": "FAIL",
+      "risk": "CRITICAL",
+      "evidence": "1 firewall rule(s) expose sensitive port(s) to 0.0.0.0/0: amcaf-test-public-mysql (MySQL port 3306)",
+      "recommendation": "Remove or restrict firewall rules exposing database/admin ports to 0.0.0.0/0; use VPC Service Controls, private IPs, or Cloud IAP instead",
       "mapping": "NIST SC-7 / ISO27001 A.13.1.3 / DORA"
     }
   ]
