@@ -1,8 +1,8 @@
 {
   "assessment_name": "AMCAF GCP Identity & Security Assessment",
-  "assessment_timestamp_utc": "2026-06-03T20:50:09.009051+00:00",
+  "assessment_timestamp_utc": "2026-06-04T17:17:29.512525+00:00",
   "project_id": "project-620345d3-ff8a-48a8-a0f",
-  "overall_score": 63,
+  "overall_score": 72,
   "summary": {
     "service_accounts": 2,
     "user_managed_keys": 0,
@@ -14,16 +14,16 @@
     "public_buckets": 0,
     "total_persistent_disks": 0,
     "cmek_disks": 0,
-    "audit_configs": 0,
-    "data_access_logging": false,
+    "audit_configs": 3,
+    "data_access_logging": true,
     "log_sinks": 2,
     "total_firewall_rules": 4,
     "ssh_open_rules": 1,
     "rdp_open_rules": 1,
     "sensitive_port_exposures": 0,
     "total_checks": 11,
-    "passed": 7,
-    "failed": 4,
+    "passed": 8,
+    "failed": 3,
     "errors": 0
   },
   "findings": [
@@ -84,10 +84,10 @@
     {
       "control": "Cloud Audit Logs Configuration",
       "control_id": "LOG-01",
-      "status": "FAIL",
-      "risk": "CRITICAL",
-      "evidence": "0 audit config(s). Data Read: disabled. Data Write: disabled",
-      "recommendation": "Enable Admin Activity and Data Access audit logs for all services",
+      "status": "PASS",
+      "risk": "LOW",
+      "evidence": "3 audit config(s). Data Read: enabled. Data Write: enabled",
+      "recommendation": "Enable Data Read/Write logs for sensitive services",
       "mapping": "NIST AU-2 / ISO27001 A.12.4.1 / DORA"
     },
     {
