@@ -1,7 +1,7 @@
 {
   "assessment_name": "AMCAF Entra Identity Governance Assessment",
-  "assessment_timestamp_utc": "2026-06-06T09:47:58.805875+00:00",
-  "overall_score": 80,
+  "assessment_timestamp_utc": "2026-06-06T10:13:58.250536+00:00",
+  "overall_score": 81,
   "summary": {
     "global_admin_count": 1,
     "total_privileged_assignments": 1,
@@ -16,8 +16,8 @@
     "application_registrations": 7,
     "conditional_access_policies": 8,
     "enabled_conditional_access_policies": 8,
-    "total_checks": 10,
-    "passed": 8,
+    "total_checks": 11,
+    "passed": 9,
     "failed": 2,
     "errors": 0
   },
@@ -110,6 +110,15 @@
       "risk": "LOW",
       "evidence": "2 CA policy(ies) respond to risky sign-ins or user risk: Require MFA and a password change when high-risk users are detected, Require MFA when risky sign-ins are detected",
       "recommendation": "Continue monitoring risk-based CA policies",
+      "mapping": "NIST SC-7 / ISO27001 A.13.1.3 / DORA"
+    },
+    {
+      "control": "Legacy Authentication Protocol Exposure",
+      "control_id": "NET-03",
+      "status": "PASS",
+      "risk": "LOW",
+      "evidence": "1 CA policy(ies) block legacy authentication (exchangeActiveSync / other): Block all legacy sign-ins that don't support MFA",
+      "recommendation": "Continue monitoring \u2014 ensure blocking policy is not scoped away from critical users",
       "mapping": "NIST SC-7 / ISO27001 A.13.1.3 / DORA"
     }
   ]
