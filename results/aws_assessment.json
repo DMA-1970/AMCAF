@@ -1,7 +1,7 @@
 {
   "assessment_name": "AMCAF AWS Identity & Security Assessment",
-  "assessment_timestamp_utc": "2026-06-06T09:46:42.727934+00:00",
-  "overall_score": 63,
+  "assessment_timestamp_utc": "2026-06-06T09:47:40.710300+00:00",
+  "overall_score": 72,
   "summary": {
     "account_id": "756454231739",
     "total_iam_users": 2,
@@ -19,10 +19,10 @@
     "total_security_groups": 1,
     "ssh_open_security_groups": 0,
     "rdp_open_security_groups": 0,
-    "sensitive_port_exposures": 1,
+    "sensitive_port_exposures": 0,
     "total_checks": 11,
-    "passed": 7,
-    "failed": 4,
+    "passed": 8,
+    "failed": 3,
     "errors": 0
   },
   "findings": [
@@ -119,10 +119,10 @@
     {
       "control": "Sensitive Port Public Exposure",
       "control_id": "NET-03",
-      "status": "FAIL",
-      "risk": "CRITICAL",
-      "evidence": "1 security group rule(s) expose sensitive port(s) to 0.0.0.0/0: sg-036aa59b906ed73dc (MySQL port 3306)",
-      "recommendation": "Remove or restrict security group rules exposing database/admin ports to 0.0.0.0/0; use VPC endpoints, private subnets, or AWS Systems Manager instead",
+      "status": "PASS",
+      "risk": "LOW",
+      "evidence": "No security group rules expose sensitive database or admin ports to 0.0.0.0/0",
+      "recommendation": "Continue monitoring for sensitive port exposure",
       "mapping": "NIST SC-7 / ISO27001 A.13.1.3 / DORA"
     }
   ]
