@@ -637,5 +637,14 @@
     "passed": 8,
     "failed": 3,
     "compliance_rate": 72.0
+  },
+  {
+    "run_id": "ENTRA-2026-06-11-170022",
+    "timestamp": "2026-06-11T17:00:22.082706+00:00",
+    "scenario": "live-entra",
+    "total_checks": 11,
+    "passed": 9,
+    "failed": 2,
+    "compliance_rate": 81.0
   }
 ]
