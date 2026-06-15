@@ -203,6 +203,64 @@ MAX_BREACH_NOTIFY_HOURS = 72
 MAX_INCIDENT_NOTIFY_HOURS = 4
 
 # ─────────────────────────────────────────────
+# VALIDATION ENGINE — CLOUD COVERAGE
+# ─────────────────────────────────────────────
+
+def validate_cloud_coverage(
+    aws_cfg: dict,
+    azure_cfg: dict,
+    gcp_cfg: dict,
+) -> list[dict]:
+    """Validate that all three cloud sources are configured and present."""
+    results = []
+    
+    # Check AWS configuration
+    aws_present = bool(aws_cfg and (
+        aws_cfg.get("iam") or 
+        aws_cfg.get("cloudtrail") or 
+        aws_cfg.get("ec2") or 
+        aws_cfg.get("s3")
+    ))
+    
+    # Check Azure configuration
+    azure_present = bool(azure_cfg and (
+        azure_cfg.get("conditional_access") or 
+        azure_cfg.get("storage_accounts") or 
+        azure_cfg.get("diagnostic_settings") or 
+        azure_cfg.get("key_vault")
+    ))
+    
+    # Check GCP configuration
+    gcp_present = bool(gcp_cfg and (
+        gcp_cfg.get("cloud_storage") or 
+        gcp_cfg.get("audit_logs") or 
+        gcp_cfg.get("iam") or 
+        gcp_cfg.get("vpc")
+    ))
+    
+    # All three sources must be present
+    all_present = aws_present and azure_present and gcp_present
+    missing = []
+    if not aws_present:
+        missing.append("AWS")
+    if not azure_present:
+        missing.append("Azure")
+    if not gcp_present:
+        missing.append("GCP")
+    
+    results.append({
+        "control_id": "COV-01",
+        "provider": "MULTI",
+        "status": "PASS" if all_present else "FAIL",
+        "detail": (f"All three cloud sources configured (AWS, Azure, GCP)"
+                   if all_present
+                   else f"Missing configuration for: {', '.join(missing)}; multi-cloud assessment incomplete"),
+        "config_attribute": "aws_config | azure_config | gcp_config",
+    })
+    
+    return results
+
+# ─────────────────────────────────────────────
 # VALIDATION ENGINE — AWS
 # ─────────────────────────────────────────────
 
@@ -835,7 +893,8 @@ def run_scenario(
     print(f"  Scenario: {scenario_id}")
     print(f"{'='*60}")
     all_results = (
-        validate_aws(aws_cfg)
+        validate_cloud_coverage(aws_cfg, azure_cfg, gcp_cfg)
+        + validate_aws(aws_cfg)
         + validate_azure(azure_cfg)
         + validate_gcp(gcp_cfg)
         + validate_organisational(org_cfg or {})
