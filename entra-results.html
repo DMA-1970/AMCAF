@@ -422,6 +422,8 @@ async function loadLatestAssessment(){
     return data;
   }catch(e){
     showError('Unable to load latest Entra assessment. The entra_assessment.json file may not exist yet.');
+    document.getElementById('findings-panel').innerHTML =
+      '<div class="findings-list"><div class="empty-state"><div class="icon">⚠</div><div class="desc">Governance findings unavailable — assessment data did not load.</div></div></div>';
     throw e;
   }
 }
@@ -549,19 +551,22 @@ async function loadHistory(){
     document.getElementById('trend-chart').innerHTML = `
       <div class="empty-state">
         <div class="icon">📈</div>
-        <div class="desc">Historical data not yet available.</div>
+        <div class="desc">Unable to load historical trend data.</div>
       </div>
     `;
+    document.getElementById('trend-note').textContent = 'History unavailable.';
+    document.getElementById('key-metrics').innerHTML =
+      '<div class="empty-state"><div class="desc">Metrics unavailable — history did not load.</div></div>';
+    document.getElementById('history-panel').innerHTML =
+      '<div class="empty-state"><div class="icon">⚠</div><div class="desc">Unable to load assessment history.</div></div>';
   }
 }
 
 async function init(){
-  try{
-    await loadLatestAssessment();
-    await loadHistory();
-  }catch(e){
-    console.error('Initialization error:', e);
-  }
+  // Load history independently of the latest-assessment fetch so one failing
+  // doesn't leave the other panel stuck on its initial "Loading…" state.
+  try{ await loadLatestAssessment(); }catch(e){ console.error('Initialization error:', e); }
+  await loadHistory();
 }
 
 init();

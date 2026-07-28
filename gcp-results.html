@@ -347,6 +347,8 @@ async function loadLatestAssessment(){
     document.getElementById('setup-guide').style.display = 'block';
     document.getElementById('findings-panel').innerHTML =
       `<div class="empty-state"><div class="title">No assessment data</div><div class="desc">Run gcp_identity_assessment.py to generate results.</div></div>`;
+    document.getElementById('key-metrics').innerHTML =
+      `<div class="empty-state"><div class="desc">Metrics unavailable — assessment data did not load.</div></div>`;
     throw e;
   }
 }
@@ -418,7 +420,10 @@ async function loadHistory(){
   }catch(e){
     console.log('History not available:', e);
     document.getElementById('trend-chart').innerHTML =
-      `<div class="empty-state"><div class="desc">Historical data not yet available.</div></div>`;
+      `<div class="empty-state"><div class="desc">Unable to load historical trend data.</div></div>`;
+    document.getElementById('trend-note').textContent = 'History unavailable.';
+    document.getElementById('history-panel').innerHTML =
+      `<div class="empty-state"><div class="icon">⚠</div><div class="desc">Unable to load assessment history.</div></div>`;
   }
 }
 
