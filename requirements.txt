@@ -1,0 +1,27 @@
+# Core validation engine (src/engine/amcaf.py) uses only the Python
+# standard library — no third-party dependencies required to run it.
+#
+# The packages below are required by the live cloud assessment scripts,
+# infrastructure helper scripts, and DOCX report generators.
+
+# AWS (aws_identity_assessment.py, manage_aws_security_group.py, manage_cloudtrail.py)
+boto3==1.43.8
+botocore==1.43.8
+
+# GCP (gcp_identity_assessment.py, manage_gcp_firewall.py)
+google-api-python-client==2.196.0
+google-auth==2.52.0
+google-auth-httplib2==0.4.0
+httplib2==0.31.2
+
+# Microsoft Entra ID / Graph API (entra_identity_assessment.py, graph_connector.py,
+# create_named_location.py, debug_named_locations.py)
+requests==2.33.1
+
+# Shared HTTP stack / environment config
+urllib3==2.7.0
+python-dotenv==1.2.2
+
+# DOCX report generation (generate_net03_executive_summary.py,
+# generate_gcp_test_report.py, generate_session_report.py)
+python-docx==1.2.0
