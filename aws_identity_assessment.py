@@ -457,6 +457,85 @@ class AWSGovernanceAssessment:
                 "mapping": "NIST SC-7 / ISO27001 A.13.1.3"
             })
     
+    # NET-03 — No Unrestricted Sensitive Port Exposure
+    SENSITIVE_PORTS = {
+        21:    "FTP",
+        23:    "Telnet",
+        1433:  "SQL Server",
+        1521:  "Oracle DB",
+        2375:  "Docker daemon",
+        2376:  "Docker TLS",
+        3306:  "MySQL",
+        5432:  "PostgreSQL",
+        5900:  "VNC",
+        6379:  "Redis",
+        9200:  "Elasticsearch",
+        9300:  "Elasticsearch transport",
+        11211: "Memcached",
+        27017: "MongoDB",
+        27018: "MongoDB shard",
+    }
+
+    def check_sensitive_port_exposure(self):
+        """NET-03: No unrestricted sensitive database/admin port exposure"""
+        try:
+            ec2 = self._client('ec2')
+            security_groups = ec2.describe_security_groups()['SecurityGroups']
+
+            exposed = []
+            for sg in security_groups:
+                for rule in sg.get('IpPermissions', []):
+                    proto = rule.get('IpProtocol', '')
+                    open_ipv4 = any(r.get('CidrIp') == '0.0.0.0/0' for r in rule.get('IpRanges', []))
+                    open_ipv6 = any(r.get('CidrIpv6') == '::/0' for r in rule.get('Ipv6Ranges', []))
+                    if not (open_ipv4 or open_ipv6):
+                        continue
+                    if proto == '-1':
+                        exposed.append(f"{sg['GroupId']} (all traffic)")
+                        break
+                    if proto == 'tcp':
+                        from_p = rule.get('FromPort', 0)
+                        to_p   = rule.get('ToPort', 0)
+                        for port, name in self.SENSITIVE_PORTS.items():
+                            if from_p <= port <= to_p:
+                                exposed.append(f"{sg['GroupId']} ({name} port {port})")
+
+            self.summary['sensitive_port_exposures'] = len(exposed)
+
+            status = "PASS" if not exposed else "FAIL"
+            risk   = "CRITICAL" if exposed else "LOW"
+            if exposed:
+                evidence = (f"{len(exposed)} security group rule(s) expose sensitive port(s) to "
+                            f"0.0.0.0/0: {', '.join(exposed[:5])}")
+                if len(exposed) > 5:
+                    evidence += f" (+{len(exposed) - 5} more)"
+            else:
+                evidence = "No security group rules expose sensitive database or admin ports to 0.0.0.0/0"
+
+            self.findings.append({
+                "control": "Sensitive Port Public Exposure",
+                "control_id": "NET-03",
+                "status": status,
+                "risk": risk,
+                "evidence": evidence,
+                "recommendation": (
+                    "Remove or restrict security group rules exposing database/admin ports to 0.0.0.0/0; "
+                    "use VPC endpoints, private subnets, or AWS Systems Manager instead"
+                    if exposed else "Continue monitoring for sensitive port exposure"
+                ),
+                "mapping": "NIST SC-7 / ISO27001 A.13.1.3 / DORA"
+            })
+        except Exception as e:
+            self.findings.append({
+                "control": "Sensitive Port Public Exposure",
+                "control_id": "NET-03",
+                "status": "ERROR",
+                "risk": "UNKNOWN",
+                "evidence": f"Unable to check: {str(e)}",
+                "recommendation": "Verify EC2 permissions",
+                "mapping": "NIST SC-7 / ISO27001 A.13.1.3"
+            })
+
     def append_to_history(self, report):
         """Append assessment to history.json"""
         try:
@@ -541,7 +620,8 @@ class AWSGovernanceAssessment:
             ("CloudTrail", self.check_cloudtrail),
             ("CloudWatch Logs", self.check_cloudwatch_logs),
             ("Unrestricted SSH", self.check_unrestricted_ssh),
-            ("Unrestricted RDP", self.check_unrestricted_rdp)
+            ("Unrestricted RDP", self.check_unrestricted_rdp),
+            ("Sensitive Port Exposure", self.check_sensitive_port_exposure)
         ]
         
         for name, check_func in checks:

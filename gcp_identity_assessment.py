@@ -535,6 +535,89 @@ class GCPGovernanceAssessment:
             self._err("Unrestricted RDP Firewall Access", "NET-02", e)
 
     # ------------------------------------------------------------------
+    # NET-03 — No Unrestricted Sensitive Port Exposure
+    # Catches public exposure of database, cache, admin, and other
+    # high-risk ports beyond SSH/RDP that are not covered by NET-01/02.
+    # ------------------------------------------------------------------
+    SENSITIVE_PORTS = {
+        "21":    "FTP",
+        "23":    "Telnet",
+        "1433":  "SQL Server",
+        "1521":  "Oracle DB",
+        "2375":  "Docker daemon",
+        "2376":  "Docker TLS",
+        "3306":  "MySQL",
+        "5432":  "PostgreSQL",
+        "5900":  "VNC",
+        "6379":  "Redis",
+        "9200":  "Elasticsearch",
+        "9300":  "Elasticsearch transport",
+        "11211": "Memcached",
+        "27017": "MongoDB",
+        "27018": "MongoDB shard",
+    }
+
+    def check_sensitive_port_exposure(self):
+        try:
+            compute = self._svc("compute")
+            result = compute.firewalls().list(project=self.project_id).execute()
+            firewalls = result.get("items", [])
+
+            exposed = []
+            for rule in firewalls:
+                if rule.get("direction", "INGRESS") != "INGRESS":
+                    continue
+                if not rule.get("allowed"):
+                    continue
+                ranges = rule.get("sourceRanges", [])
+                if "0.0.0.0/0" not in ranges and "::/0" not in ranges:
+                    continue
+                for allowed in rule.get("allowed", []):
+                    proto = allowed.get("IPProtocol", "")
+                    ports = allowed.get("ports", [])
+                    if proto == "all":
+                        exposed.append(f"{rule['name']} (all ports)")
+                        break
+                    if proto == "tcp":
+                        for p in ports:
+                            # handle ranges like "3300-3310"
+                            if "-" in str(p):
+                                lo, hi = str(p).split("-")
+                                for sp, sname in self.SENSITIVE_PORTS.items():
+                                    if int(lo) <= int(sp) <= int(hi):
+                                        exposed.append(f"{rule['name']} ({sname} port {sp})")
+                            elif str(p) in self.SENSITIVE_PORTS:
+                                exposed.append(f"{rule['name']} ({self.SENSITIVE_PORTS[str(p)]} port {p})")
+
+            self.summary["sensitive_port_exposures"] = len(exposed)
+
+            status = "PASS" if not exposed else "FAIL"
+            risk   = "CRITICAL" if exposed else "LOW"
+            if exposed:
+                evidence = (f"{len(exposed)} firewall rule(s) expose sensitive port(s) to 0.0.0.0/0: "
+                            f"{', '.join(exposed[:5])}")
+                if len(exposed) > 5:
+                    evidence += f" (+{len(exposed) - 5} more)"
+            else:
+                evidence = "No firewall rules expose sensitive database or admin ports to 0.0.0.0/0"
+
+            self.findings.append({
+                "control": "Sensitive Port Public Exposure",
+                "control_id": "NET-03",
+                "status": status,
+                "risk": risk,
+                "evidence": evidence,
+                "recommendation": (
+                    "Remove or restrict firewall rules exposing database/admin ports to 0.0.0.0/0; "
+                    "use VPC Service Controls, private IPs, or Cloud IAP instead"
+                    if exposed else "Continue monitoring for sensitive port exposure"
+                ),
+                "mapping": "NIST SC-7 / ISO27001 A.13.1.3 / DORA",
+            })
+        except Exception as e:
+            self._err("Sensitive Port Public Exposure", "NET-03", e)
+
+    # ------------------------------------------------------------------
     # Scoring and reporting
     # ------------------------------------------------------------------
 
@@ -636,6 +719,7 @@ class GCPGovernanceAssessment:
             ("Log Sinks",                     self.check_log_sinks),
             ("Unrestricted SSH",              self.check_unrestricted_ssh),
             ("Unrestricted RDP",              self.check_unrestricted_rdp),
+            ("Sensitive Port Exposure",       self.check_sensitive_port_exposure),
         ]
 
         for name, fn in checks:

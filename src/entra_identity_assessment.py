@@ -412,6 +412,63 @@ class EntraGovernanceAssessment:
             self._err("Named Location Network Controls", "NET-01", e)
 
     # ------------------------------------------------------------------
+    # NET-03 — Legacy Authentication Protocol Exposure
+    # Equivalent to: AWS/GCP sensitive port public exposure check
+    # Legacy auth (SMTP/POP/IMAP/EAS basic) bypasses MFA entirely —
+    # the identity equivalent of leaving MySQL 3306 open to 0.0.0.0/0.
+    # ------------------------------------------------------------------
+    def check_legacy_auth_block(self):
+        try:
+            ca_policies = self._val("identity/conditionalAccess/policies")
+            enabled = [p for p in ca_policies if str(p.get("state", "")).lower() == "enabled"]
+
+            blocking_policies = []
+            for p in enabled:
+                client_apps = p.get("conditions", {}).get("clientAppTypes", [])
+                grant = p.get("grantControls") or {}
+                controls = grant.get("builtInControls", [])
+
+                targets_legacy = (
+                    "exchangeActiveSync" in client_apps or
+                    "other" in client_apps
+                )
+                blocks = "block" in controls
+
+                if targets_legacy and blocks:
+                    blocking_policies.append(p.get("displayName", "Unnamed"))
+
+            status = "PASS" if blocking_policies else "FAIL"
+            risk = "LOW" if status == "PASS" else "CRITICAL"
+
+            if status == "PASS":
+                evidence = (
+                    f"{len(blocking_policies)} CA policy(ies) block legacy authentication "
+                    f"(exchangeActiveSync / other): {', '.join(blocking_policies[:3])}"
+                )
+            else:
+                evidence = (
+                    "No Conditional Access policy blocks legacy authentication protocols. "
+                    "SMTP AUTH, POP3, IMAP, and EAS basic auth bypass MFA and are exposed."
+                )
+
+            self.findings.append({
+                "control": "Legacy Authentication Protocol Exposure",
+                "control_id": "NET-03",
+                "status": status,
+                "risk": risk,
+                "evidence": evidence,
+                "recommendation": (
+                    "Create a CA policy targeting clientAppTypes exchangeActiveSync and other "
+                    "with grantControls block to prevent all legacy auth sign-ins"
+                    if status == "FAIL" else
+                    "Continue monitoring — ensure blocking policy is not scoped away from critical users"
+                ),
+                "mapping": "NIST SC-7 / ISO27001 A.13.1.3 / DORA",
+            })
+        except Exception as e:
+            self._err("Legacy Authentication Protocol Exposure", "NET-03", e)
+
+    # ------------------------------------------------------------------
     # NET-02 — Risky Sign-in Detection Policy
     # Equivalent to: AWS unrestricted RDP check
     # ------------------------------------------------------------------
@@ -558,6 +615,7 @@ class EntraGovernanceAssessment:
             ("Identity Protection",          self.check_identity_protection),
             ("Named Locations",              self.check_named_locations),
             ("Risky Sign-in Policy",         self.check_risky_signin_policy),
+            ("Legacy Auth Block",            self.check_legacy_auth_block),
         ]
 
         for name, fn in checks:
