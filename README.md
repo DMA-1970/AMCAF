@@ -150,6 +150,25 @@ Valid `--framework` values: `ALL, DORA, FCA, UKGDPR, ISO27001, NISTCSF, CSSF, ND
 
 ---
 
+## Live Provider Assessments
+
+Separate from the synthetic scenario engine above, three scripts assess **real** cloud/identity environments via their respective APIs. These require credentials and network access; they are not run as part of the automated test suite.
+
+```bash
+# AWS — uses the default boto3 credential chain (env vars, ~/.aws/credentials, or an assumed role)
+AWS_PROFILE=<AWS_PROFILE> python aws_identity_assessment.py
+
+# GCP — uses Application Default Credentials for the target project
+GOOGLE_CLOUD_PROJECT=<GCP_PROJECT_ID> python gcp_identity_assessment.py
+
+# Microsoft Entra ID — reads TENANT_ID / CLIENT_ID / CLIENT_SECRET / GRAPH_SCOPE from a local .env file (see Security below)
+python src/entra_identity_assessment.py
+```
+
+Each script prints a console report, writes its single latest result to `results/{aws,gcp,entra}_assessment.json` (overwriting the previous run — see Limitations), and appends a summary row to `results/history/history.json`.
+
+---
+
 ## Repository Structure
 
 ```
@@ -173,8 +192,8 @@ AMCAF/
 │   └── graph_connector.py            # Microsoft Graph API client used by the above
 │
 ├── configs/                     # Synthetic scenario configuration data
-│   ├── scenario-01 … scenario-08      # Extensionless — see "Known limitation" note below
-│   └── scenario-custom.json          # The only scenario file the engine currently loads from disk
+│   ├── scenario-01.json … scenario-08.json   # Serialised from amcaf.py's SCENARIOS dict; loaded at runtime
+│   └── scenario-custom.json                  # Loaded via --scenario CUSTOM
 │
 ├── results/                     # JSON compliance report outputs
 │   ├── sc-01.json … sc-08.json, sc-custom.json   # One per scenario (per --format json run)
@@ -235,11 +254,31 @@ Each compliance run produces a structured JSON report (illustrative excerpt — 
 
 ---
 
+## Dashboard & Reporting
+
+`index.html`, `history.html`, `aws-results.html`, `gcp-results.html` and `entra-results.html` are static HTML/JS files at the repository root — there is no build step or server-side component. Each page fetches the relevant committed JSON (`results/*.json`, `results/history/*.json`) directly via `fetch()` at page-load time and renders it client-side. The dashboard is published by GitHub Pages serving the `main` branch root directly; publishing a new result is simply a matter of committing the updated JSON. A GitHub Actions workflow (`.github/workflows/run-simulation.yml`) can trigger a synthetic-scenario run and commit its results automatically; the three live-assessment scripts are run manually and each pushes its own result as part of its own execution (see `push_to_github()` in each script).
+
+---
+
+## Security & Credential Handling
+
+- No credentials are stored in this repository. `.env` (Entra `TENANT_ID`/`CLIENT_ID`/`CLIENT_SECRET`/`GRAPH_SCOPE`) is git-ignored; AWS uses the standard boto3 credential chain; GCP uses Application Default Credentials. None of these are read, logged, or written into any output file.
+- Example commands in this README use placeholders (`<AWS_PROFILE>`, `<GCP_PROJECT_ID>`, `<AZURE_TENANT_ID>`, `<CLIENT_ID>`) — substitute your own values, never commit real ones.
+- The synthetic scenario engine (`src/engine/amcaf.py`) needs no credentials at all — it only ever reads local JSON.
+- If you fork this repository, check `git status` for any locally-created credential export files (e.g. a cloud console's downloaded access-key CSV) before committing — these do not belong in version control and are not present in the canonical history of this repository.
+
+---
+
 ## Limitations
 
+- **Prototype scope:** this is a Design Science Research artefact, not a production-ready platform. It performs point-in-time detection only.
+- **No automatic remediation:** AMCAF reports findings; it never changes cloud configuration. The NET-03 remediation described in this project was performed by separate, manually-invoked helper scripts (`manage_aws_security_group.py`, `manage_gcp_firewall.py`) that create/remove the test misconfiguration — AMCAF itself only detects it.
+- **No continuous monitoring:** both the synthetic engine and the live scripts run on demand (locally or via a manually/CI-triggered GitHub Actions workflow), not as a persistent service. There is no scheduler, no webhook listener, and no alerting.
+- **No SIEM integration:** LOG-03 and RES-03 *check whether the target environment* has real-time alerting or a SIEM-equivalent enabled (e.g. AWS Security Hub, Microsoft Sentinel, GCP Security Command Center) — AMCAF does not itself forward findings to a SIEM or any external system.
+- **"Drift detection" is a checked control, not a native capability:** RES-02 checks whether the target environment has *its own* drift-detection tooling enabled (e.g. AWS Config, Azure Policy). AMCAF does not itself track configuration drift between its own runs.
 - **Synthetic data:** the 8 scenarios above are evaluated against synthetic JSON configurations, not live cloud APIs. Separate scripts (`aws_identity_assessment.py`, `gcp_identity_assessment.py`, `src/entra_identity_assessment.py`) perform live assessments against real AWS/GCP/Entra environments, with their own findings and their own `results/history/history.json` ledger (see [Evaluation Scenarios](#evaluation-scenarios) for how their check-counting and `ERROR` status differ from the scenario engine).
 - **Static mapping:** cross-cloud mappings reflect provider documentation at time of research and require ongoing maintenance.
-- **Known limitation — on-disk scenario configs are not loaded:** `configs/scenario-01` … `scenario-08` are extensionless files, but `load_scenario_from_file()` in `src/engine/amcaf.py` looks for `configs/scenario-{NN}.json`. The lookup fails silently and the engine falls back to hardcoded scenario definitions baked into `amcaf.py` itself. `configs/scenario-custom.json` is the only scenario file the engine actually reads from disk (via `--scenario CUSTOM`). The results reported in this README reflect the current, actual (hardcoded-fallback) behaviour.
+- **Resolved limitation — on-disk scenario configs (historical note):** prior to commit `e64041c`, `configs/scenario-01` … `scenario-08` were extensionless files that `load_scenario_from_file()` could never find (it looks for `configs/scenario-{NN}.json`), so the engine silently fell back to scenario definitions hardcoded in `amcaf.py` itself. As of `e64041c`, the eight files were regenerated as `.json` (serialised directly from the `SCENARIOS` dict, not hand-transcribed) and are now loaded from disk on every run. This was verified to produce byte-identical output to the old hardcoded fallback before the extensionless files were removed — the figures in this README were unaffected by the fix.
 - **Two independent NET-03 definitions:** the scenario engine's `NET-03` (management ports 22/3389 only) and the live AWS/GCP scripts' `NET-03` ("Sensitive Port Public Exposure", covering 3306/5432/6379/etc.) share a control ID but check different things. The live AWS script does not consult `MANAGEMENT_PORTS` from `src/engine/amcaf.py` — it carries its own, broader `SENSITIVE_PORTS` table.
 
 ---
@@ -247,12 +286,27 @@ Each compliance run produces a structured JSON report (illustrative excerpt — 
 ## Future Development
 
 - Integrate live configuration ingestion via AWS Config, Azure Resource Graph and GCP Cloud Asset Inventory APIs directly into the scenario engine (the live assessment scripts already do this independently; unifying the two is future work)
-- Fix the scenario config loader so `configs/scenario-01`–`scenario-08` are actually read from disk rather than falling back to hardcoded definitions
+- Archive full per-run findings for the live assessment scripts, not just the summary row (see the Live Assessments section below)
 - Reconcile the two NET-03 definitions (or rename one) so the same control ID means the same check across the scenario engine and the live assessment scripts
 - Add dynamic mapping versioning linked to provider change notifications
 - Augment rule-based engine with AI-assisted anomaly detection for continuous monitoring controls
 
 ---
+
+## Dissertation Artefact Version
+
+The implementation evaluated in the accompanying dissertation is git tag **`v1.0-dissertation`**, commit **`e64041c`**. All figures in this README (320 checks / 282 passed / 38 failed / 88.1% across SC-01–08) were reproduced directly from that exact commit, including from an independent fresh clone (`git clone` + `git checkout v1.0-dissertation` in a separate directory, not the working copy these figures were originally produced in).
+
+## Reproducibility Notes
+
+```bash
+git clone https://github.com/dma-1970/AMCAF.git
+cd AMCAF
+git checkout v1.0-dissertation
+python src/engine/amcaf.py --scenario ALL
+```
+
+This requires no third-party packages (the engine is stdlib-only) and no credentials. `requirements.txt` is only needed if you also intend to run the live AWS/GCP/Entra scripts or the `.docx` report generators. Note: `pip install -r requirements.txt` may fail behind a corporate proxy that intercepts TLS without a trusted CA bundle configured for pip — this is an environment issue, not a repository defect, and does not affect the synthetic engine.
 
 ## Academic Context
 
@@ -262,8 +316,10 @@ This artefact was developed as part of an MSc Enterprise IT Management dissertat
 
 **Methodology:** Design Science Research (DSR)
 
+**Citation:** Abiodun, D. (2026) *Automated Multi-Cloud Compliance Assurance Framework (AMCAF): A Design Science Approach to Continuous Governance Validation in Financial Services Cloud Environments*. MSc dissertation, University of Essex Online. Source code: https://github.com/dma-1970/AMCAF, tag `v1.0-dissertation`.
+
 ---
 
 ## License
 
-MIT License — see [LICENSE](LICENSE) for details.
+MIT License — see [LICENSE](LICENSE) for details. This repository is an academic research artefact; the live-assessment scripts are provided for research/educational use against environments you own or are authorised to test — do not run them against systems without authorisation.
