@@ -682,5 +682,14 @@
     "passed": 8,
     "failed": 3,
     "compliance_rate": 72.0
+  },
+  {
+    "run_id": "AWS-2026-09-19-203827",
+    "timestamp": "2026-09-19T20:38:27.505999+00:00",
+    "scenario": "live-aws",
+    "total_checks": 11,
+    "passed": 8,
+    "failed": 3,
+    "compliance_rate": 72.0
   }
 ]
